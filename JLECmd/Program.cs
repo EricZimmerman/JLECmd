@@ -885,33 +885,39 @@ namespace JLECmd
                             ? string.Empty
                             : destListEntry.VolumeDroid.ToString(),
                     TargetCreated =
-                        destListEntry.Lnk.Header.TargetCreationDate.Year == 1601
+                        destListEntry.Lnk?.Header.TargetCreationDate.Year == 1601
                             ? string.Empty
-                            : destListEntry.Lnk.Header.TargetCreationDate.ToString(
+                            : destListEntry.Lnk?.Header.TargetCreationDate.ToString(
                                 _fluentCommandLineParser.Object.DateTimeFormat),
                     TargetModified =
-                        destListEntry.Lnk.Header.TargetModificationDate.Year == 1601
+                        destListEntry.Lnk?.Header.TargetModificationDate.Year == 1601
                             ? string.Empty
-                            : destListEntry.Lnk.Header.TargetModificationDate.ToString(
+                            : destListEntry.Lnk?.Header.TargetModificationDate.ToString(
                                 _fluentCommandLineParser.Object.DateTimeFormat),
                     TargetAccessed =
-                        destListEntry.Lnk.Header.TargetLastAccessedDate.Year == 1601
+                        destListEntry.Lnk?.Header.TargetLastAccessedDate.Year == 1601
                             ? string.Empty
-                            : destListEntry.Lnk.Header.TargetLastAccessedDate.ToString(
+                            : destListEntry.Lnk?.Header.TargetLastAccessedDate.ToString(
                                 _fluentCommandLineParser.Object.DateTimeFormat),
-                    CommonPath = destListEntry.Lnk.CommonPath,
-                    DriveLabel = destListEntry.Lnk.VolumeInfo?.VolumeLabel,
-                    DriveSerialNumber = destListEntry.Lnk.VolumeInfo?.DriveSerialNumber,
+                    CommonPath = destListEntry.Lnk?.CommonPath,
+                    DriveLabel = destListEntry.Lnk?.VolumeInfo?.VolumeLabel,
+                    DriveSerialNumber = destListEntry.Lnk?.VolumeInfo?.DriveSerialNumber,
                     DriveType =
-                        destListEntry.Lnk.VolumeInfo == null
+                        destListEntry.Lnk?.VolumeInfo == null
                             ? "(None)"
-                            : GetDescriptionFromEnumValue(destListEntry.Lnk.VolumeInfo.DriveType),
-                    FileAttributes = destListEntry.Lnk.Header.FileAttributes.ToString(),
-                    FileSize = destListEntry.Lnk.Header.FileSize,
-                    HeaderFlags = destListEntry.Lnk.Header.DataFlags.ToString(),
-                    LocalPath = destListEntry.Lnk.LocalPath,
-                    RelativePath = destListEntry.Lnk.RelativePath
+                            : GetDescriptionFromEnumValue(destListEntry.Lnk?.VolumeInfo.DriveType),
+                    FileAttributes = destListEntry.Lnk?.Header.FileAttributes.ToString(),
+                    FileSize = destListEntry.Lnk?.Header.FileSize ?? 0,
+                    HeaderFlags = destListEntry.Lnk?.Header.DataFlags.ToString(),
+                    LocalPath = destListEntry.Lnk?.LocalPath,
+                    RelativePath = destListEntry.Lnk?.RelativePath
                 };
+
+                if (destListEntry.Lnk == null)
+                {
+                    csList.Add(csOut);
+                    continue;
+                }
 
                 if (destListEntry.Lnk.TargetIDs?.Count > 0)
                 {
