@@ -30,6 +30,8 @@ namespace JLECmd
         private const string SSLicenseFile = @"D:\SSLic.txt";
         private static Logger _logger;
 
+        private static string _preciseTimeFormat = "yyyy-MM-dd HH:mm:ss.fffffff K";
+
         private static FluentCommandLineParser<ApplicationArguments> _fluentCommandLineParser;
 
         private static List<string> _failedFiles;
@@ -88,15 +90,12 @@ namespace JLECmd
                     "When true, process all files in directory vs. only files matching *.automaticDestinations-ms or *.customDestinations-ms\r\n")
                 .SetDefault(false);
 
-            _fluentCommandLineParser.Setup(arg => arg.CsvFile)
+            _fluentCommandLineParser.Setup(arg => arg.CsvDirectory)
                 .As("csv")
                 .WithDescription(
-                    "File to save CSV (tab separated) formatted results to. Be sure to include the full path in double quotes");
+                    "Directory to save CSV (tab separated) formatted results to. Be sure to include the full path in double quotes");
 
-            _fluentCommandLineParser.Setup(arg => arg.XmlDirectory)
-                .As("xml")
-                .WithDescription(
-                    "Directory to save XML formatted results to. Be sure to include the full path in double quotes");
+       
 
             _fluentCommandLineParser.Setup(arg => arg.xHtmlDirectory)
                 .As("html")
@@ -121,26 +120,26 @@ namespace JLECmd
 
 
             _fluentCommandLineParser.Setup(arg => arg.IncludeLnkDetail).As("ld")
-    .WithDescription(
-        "When true, include more information about lnk files (for full lnk details, dump lnk entries and process with LECmd")
-    .SetDefault(false);
+                .WithDescription(
+                    "When true, include more information about auto files (for full auto details, dump auto entries and process with LECmd")
+                .SetDefault(false);
 
             _fluentCommandLineParser.Setup(arg => arg.LnkDumpDirectory).As("dumpTo")
-    .WithDescription(
-        "The directory to export all lnk files to")
-    .SetDefault(string.Empty);
+                .WithDescription(
+                    "The directory to export all auto files to")
+                .SetDefault(string.Empty);
 
+            _fluentCommandLineParser.Setup(arg => arg.DateTimeFormat)
+                .As("dt")
+                .WithDescription(
+                    "The custom date/time format to use when displaying time stamps. Default is: yyyy-MM-dd HH:mm:ss K")
+                .SetDefault("yyyy-MM-dd HH:mm:ss K");
 
-            //            _fluentCommandLineParser.Setup(arg => arg.NoTargetIDList)
-            //                .As("nid")
-            //                .WithDescription(
-            //                    "When true, Target ID list details will NOT be displayed. Default is false.").SetDefault(false);
-            //
-            //
-            //            _fluentCommandLineParser.Setup(arg => arg.NoExtraBlocks)
-            //                .As("neb")
-            //                .WithDescription(
-            //                    "When true, Extra blocks information will NOT be displayed. Default is false.").SetDefault(false);
+            _fluentCommandLineParser.Setup(arg => arg.PreciseTimestamps)
+                .As("mp")
+                .WithDescription(
+                    "When true, display higher precision for time stamps. Default is false").SetDefault(false);
+
 
 
             var header =
@@ -149,7 +148,8 @@ namespace JLECmd
                 "\r\nhttps://github.com/EricZimmerman/JLECmd";
 
             var footer = @"Examples: JLECmd.exe -f ""C:\Temp\f01b4d95cf55d32a.customDestinations-ms""" + "\r\n\t " +
-                         @" JLECmd.exe -f ""C:\Temp\f01b4d95cf55d32a.customDestinations-ms"" --json ""D:\jsonOutput"" --jsonpretty" + "\r\n\t " +
+                         @" JLECmd.exe -f ""C:\Temp\f01b4d95cf55d32a.customDestinations-ms"" --json ""D:\jsonOutput"" --jsonpretty" +
+                         "\r\n\t " +
                          @" JLECmd.exe -d ""C:\CustomDestinations"" --csv ""c:\temp\jumplist_out.tsv"" --html c:\temp --xml c:\temp\xml -q" +
                          "\r\n\t " +
                          @" JLECmd.exe -d ""C:\Temp"" --all" + "\r\n\t" +
@@ -209,12 +209,12 @@ namespace JLECmd
             _processedCustomFiles = new List<CustomDestination>();
 
 
-            if (_fluentCommandLineParser.Object.CsvFile?.Length > 0)
+            if (_fluentCommandLineParser.Object.CsvDirectory?.Length > 0)
             {
-                if (string.IsNullOrEmpty(Path.GetFileName(_fluentCommandLineParser.Object.CsvFile)))
+                if (string.IsNullOrEmpty(Path.GetFileName(_fluentCommandLineParser.Object.CsvDirectory)))
                 {
                     _logger.Error(
-                        $"'{_fluentCommandLineParser.Object.CsvFile}' is not a file. Please specify a file to save results to. Exiting");
+                        $"'{_fluentCommandLineParser.Object.CsvDirectory}' is not a file. Please specify a file to save results to. Exiting");
                     return;
                 }
             }
@@ -357,7 +357,7 @@ namespace JLECmd
             {
                 _logger.Info("");
                 _logger.Warn(
-                          $"Dumping lnk files to '{_fluentCommandLineParser.Object.LnkDumpDirectory}'");
+                    $"Dumping lnk files to '{_fluentCommandLineParser.Object.LnkDumpDirectory}'");
 
                 if (Directory.Exists(_fluentCommandLineParser.Object.LnkDumpDirectory) == false)
                 {
@@ -392,7 +392,7 @@ namespace JLECmd
                         continue;
                     }
                     var outDir = Path.Combine(_fluentCommandLineParser.Object.LnkDumpDirectory,
-                           Path.GetFileName(automaticDestination.SourceFile));
+                        Path.GetFileName(automaticDestination.SourceFile));
 
                     if (Directory.Exists(outDir) == false)
                     {
@@ -402,161 +402,186 @@ namespace JLECmd
                     automaticDestination.DumpAllLnkFiles(outDir);
                 }
 
-                
+
             }
 
 
-            throw new Exception("Do exporting");
+
 
             if (_processedAutoFiles.Count > 0)
             {
-                _logger.Info("");
-
-                try
-                {
-                    CsvWriter csv = null;
-                    StreamWriter sw = null;
-
-                    if (_fluentCommandLineParser.Object.CsvFile?.Length > 0)
-                    {
-                        _fluentCommandLineParser.Object.CsvFile =
-                            Path.GetFullPath(_fluentCommandLineParser.Object.CsvFile);
-                        _logger.Warn(
-                            $"CSV (tab separated) output will be saved to '{_fluentCommandLineParser.Object.CsvFile}'");
-
-                        try
-                        {
-                            sw = new StreamWriter(_fluentCommandLineParser.Object.CsvFile);
-                            csv = new CsvWriter(sw);
-                            csv.Configuration.Delimiter = $"{'\t'}";
-                            csv.WriteHeader(typeof(CustomCsvOut));
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.Error(
-                                $"Unable to open '{_fluentCommandLineParser.Object.CsvFile}' for writing. CSV export canceled. Error: {ex.Message}");
-                        }
-                    }
-
-                    if (_fluentCommandLineParser.Object.JsonDirectory?.Length > 0)
-                    {
-                        _logger.Warn($"Saving json output to '{_fluentCommandLineParser.Object.JsonDirectory}'");
-                    }
-                    if (_fluentCommandLineParser.Object.XmlDirectory?.Length > 0)
-                    {
-                        _logger.Warn($"Saving XML output to '{_fluentCommandLineParser.Object.XmlDirectory}'");
-                    }
-
-                    XmlTextWriter xml = null;
-
-                    if (_fluentCommandLineParser.Object.xHtmlDirectory?.Length > 0)
-                    {
-                        var outDir = Path.Combine(_fluentCommandLineParser.Object.xHtmlDirectory,
-                            $"{DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss")}_LECmd_Output_for_{_fluentCommandLineParser.Object.xHtmlDirectory.Replace(@":\", "_").Replace(@"\", "_")}");
-
-                        if (Directory.Exists(outDir) == false)
-                        {
-                            Directory.CreateDirectory(outDir);
-                        }
-
-//                        File.WriteAllText(Path.Combine(outDir, "normalize.css"), Resources.normalize);
-//                        File.WriteAllText(Path.Combine(outDir, "style.css"), Resources.style);
-
-                        var outFile = Path.Combine(_fluentCommandLineParser.Object.xHtmlDirectory, outDir, "index.xhtml");
-
-                        _logger.Warn($"Saving HTML output to '{outFile}'");
-
-                        xml = new XmlTextWriter(outFile, Encoding.UTF8)
-                        {
-                            Formatting = Formatting.Indented,
-                            Indentation = 4
-                        };
-
-                        xml.WriteStartDocument();
-
-                        xml.WriteProcessingInstruction("xml-stylesheet", "href=\"normalize.css\"");
-                        xml.WriteProcessingInstruction("xml-stylesheet", "href=\"style.css\"");
-
-                        xml.WriteStartElement("document");
-                    }
-
-//                    foreach (var processedFile in _processedAutoFiles)
-//                    {
-//                        var o = GetCsvFormat(processedFile);
-//
-//                        try
-//                        {
-//                            csv?.WriteRecord(o);
-//                        }
-//                        catch (Exception ex)
-//                        {
-//                            _logger.Error(
-//                                $"Error writing record for '{processedFile.SourceFile}' to '{_fluentCommandLineParser.Object.CsvFile}'. Error: {ex.Message}");
-//                        }
-//
-//                        if (_fluentCommandLineParser.Object.JsonDirectory?.Length > 0)
-//                        {
-//                            SaveJson(processedFile, _fluentCommandLineParser.Object.JsonPretty,
-//                                _fluentCommandLineParser.Object.JsonDirectory);
-//                        }
-//
-//                        //XHTML
-//                        xml?.WriteStartElement("Container");
-//                        xml?.WriteElementString("SourceFile", o.SourceFile);
-//                        xml?.WriteElementString("SourceCreated", o.SourceCreated.ToString());
-//                        xml?.WriteElementString("SourceModified", o.SourceModified.ToString());
-//                        xml?.WriteElementString("SourceAccessed", o.SourceAccessed.ToString());
-//                        xml?.WriteElementString("TargetCreated", o.TargetCreated.ToString());
-//                        xml?.WriteElementString("TargetModified", o.TargetModified.ToString());
-//                        xml?.WriteElementString("TargetAccessed", o.TargetModified.ToString());
-//                        xml?.WriteElementString("FileSize", o.FileSize.ToString());
-//                        xml?.WriteElementString("RelativePath", o.RelativePath);
-//                        xml?.WriteElementString("WorkingDirectory", o.WorkingDirectory);
-//                        xml?.WriteElementString("FileAttributes", o.FileAttributes);
-//                        xml?.WriteElementString("HeaderFlags", o.HeaderFlags);
-//                        xml?.WriteElementString("DriveType", o.DriveType);
-//                        xml?.WriteElementString("DriveSerialNumber", o.DriveSerialNumber);
-//                        xml?.WriteElementString("DriveLabel", o.DriveLabel);
-//                        xml?.WriteElementString("LocalPath", o.LocalPath);
-//                        xml?.WriteElementString("CommonPath", o.CommonPath);
-//
-//                        xml?.WriteElementString("TargetIDAbsolutePath", o.TargetIDAbsolutePath);
-//
-//                        xml?.WriteElementString("TargetMFTEntryNumber", $"{o.TargetMFTEntryNumber}");
-//                        xml?.WriteElementString("TargetMFTSequenceNumber", $"{o.TargetMFTSequenceNumber}");
-//
-//                        xml?.WriteElementString("MachineID", o.MachineID);
-//                        xml?.WriteElementString("MachineMACAddress", o.MachineMACAddress);
-//                        xml?.WriteElementString("MACVendor", o.MACVendor);
-//                        xml?.WriteElementString("TrackerCreatedOn", o.TrackerCreatedOn.ToString());
-//
-//                        xml?.WriteElementString("ExtraBlocksPresent", o.ExtraBlocksPresent);
-//
-//                        xml?.WriteEndElement();
-//
-//                        if (_fluentCommandLineParser.Object.XmlDirectory?.Length > 0)
-//                        {
-//                            SaveXML(o, _fluentCommandLineParser.Object.XmlDirectory);
-//                        }
-//                    }
+                ExportAuto();
 
 
-                    //Close CSV stuff
-                    sw?.Flush();
-                    sw?.Close();
+            }
 
-                    //Close XML
-                    xml?.WriteEndElement();
-                    xml?.WriteEndDocument();
-                    xml?.Flush();
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error(
-                        $"Error exporting data! Error: {ex.Message}");
-                }
+            if (_processedCustomFiles.Count > 0)
+            {
+                ExportCustom();
+
+
             }
         }
+
+        private static void ExportCustom()
+        {
+            _logger.Fatal("Not done");
+        }
+
+        private static void ExportAuto()
+        {
+
+            _logger.Info("");
+
+            try
+            {
+                CsvWriter csvAuto = null;
+                StreamWriter swAuto = null;
+
+                if (_fluentCommandLineParser.Object.CsvDirectory?.Length > 0)
+                {
+                    var outName = $"{DateTimeOffset.Now.ToString("yyyyMMddHHmmss")}_AutomaticDestinations.tsv";
+                    var outFile = Path.Combine(_fluentCommandLineParser.Object.CsvDirectory, outName);
+
+                    
+                    _logger.Warn(
+                        $"CSV (tab separated) output will be saved to '{outFile}'");
+
+                    try
+                    {
+                        swAuto = new StreamWriter(outFile);
+                        csvAuto = new CsvWriter(swAuto);
+                        csvAuto.Configuration.Delimiter = $"{'\t'}";
+                        csvAuto.WriteHeader(typeof(AutoCsvOut));
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error(
+                            $"Unable to write to '{_fluentCommandLineParser.Object.CsvDirectory}'. Automatic CSV export canceled. Error: {ex.Message}");
+                    }
+                }
+
+                if (_fluentCommandLineParser.Object.JsonDirectory?.Length > 0)
+                {
+                    _logger.Warn($"Saving json output to '{_fluentCommandLineParser.Object.JsonDirectory}'");
+                }
+
+
+                XmlTextWriter xml = null;
+
+                if (_fluentCommandLineParser.Object.xHtmlDirectory?.Length > 0)
+                {
+                    var outDir = Path.Combine(_fluentCommandLineParser.Object.xHtmlDirectory,
+                        $"{DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss")}_JLECmd_Output_for_{_fluentCommandLineParser.Object.xHtmlDirectory.Replace(@":\", "_").Replace(@"\", "_")}");
+
+                    if (Directory.Exists(outDir) == false)
+                    {
+                        Directory.CreateDirectory(outDir);
+                    }
+
+                    //                        File.WriteAllText(Path.Combine(outDir, "normalize.css"), Resources.normalize);
+                    //                        File.WriteAllText(Path.Combine(outDir, "style.css"), Resources.style);
+
+                    var outFile = Path.Combine(_fluentCommandLineParser.Object.xHtmlDirectory, outDir, "index.xhtml");
+
+                    _logger.Warn($"Saving HTML output to '{outFile}'");
+
+                    xml = new XmlTextWriter(outFile, Encoding.UTF8)
+                    {
+                        Formatting = Formatting.Indented,
+                        Indentation = 4
+                    };
+
+                    xml.WriteStartDocument();
+
+                    xml.WriteProcessingInstruction("xml-stylesheet", "href=\"normalize.css\"");
+                    xml.WriteProcessingInstruction("xml-stylesheet", "href=\"style.css\"");
+
+                    xml.WriteStartElement("document");
+                }
+
+                foreach (var processedFile in _processedAutoFiles)
+                {
+
+                                            if (_fluentCommandLineParser.Object.JsonDirectory?.Length > 0)
+                                            {
+                                                SaveJsonAuto(processedFile, _fluentCommandLineParser.Object.JsonPretty,
+                                                    _fluentCommandLineParser.Object.JsonDirectory);
+                                            }
+
+                                            var o = GetAutoCsvFormat(processedFile);
+                    
+                                            try
+                                            {
+                                                csvAuto?.WriteRecords(o);
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                _logger.Error(
+                                                    $"Error writing record for '{processedFile.SourceFile}' to '{_fluentCommandLineParser.Object.CsvDirectory}'. Error: {ex.Message}");
+                                            }
+                }
+
+                //
+
+                //
+                //                        //XHTML
+                //                        xml?.WriteStartElement("Container");
+                //                        xml?.WriteElementString("SourceFile", o.SourceFile);
+                //                        xml?.WriteElementString("SourceCreated", o.SourceCreated.ToString());
+                //                        xml?.WriteElementString("SourceModified", o.SourceModified.ToString());
+                //                        xml?.WriteElementString("SourceAccessed", o.SourceAccessed.ToString());
+                //                        xml?.WriteElementString("TargetCreated", o.TargetCreated.ToString());
+                //                        xml?.WriteElementString("TargetModified", o.TargetModified.ToString());
+                //                        xml?.WriteElementString("TargetAccessed", o.TargetModified.ToString());
+                //                        xml?.WriteElementString("FileSize", o.FileSize.ToString());
+                //                        xml?.WriteElementString("RelativePath", o.RelativePath);
+                //                        xml?.WriteElementString("WorkingDirectory", o.WorkingDirectory);
+                //                        xml?.WriteElementString("FileAttributes", o.FileAttributes);
+                //                        xml?.WriteElementString("HeaderFlags", o.HeaderFlags);
+                //                        xml?.WriteElementString("DriveType", o.DriveType);
+                //                        xml?.WriteElementString("DriveSerialNumber", o.DriveSerialNumber);
+                //                        xml?.WriteElementString("DriveLabel", o.DriveLabel);
+                //                        xml?.WriteElementString("LocalPath", o.LocalPath);
+                //                        xml?.WriteElementString("CommonPath", o.CommonPath);
+                //
+                //                        xml?.WriteElementString("TargetIDAbsolutePath", o.TargetIDAbsolutePath);
+                //
+                //                        xml?.WriteElementString("TargetMFTEntryNumber", $"{o.TargetMFTEntryNumber}");
+                //                        xml?.WriteElementString("TargetMFTSequenceNumber", $"{o.TargetMFTSequenceNumber}");
+                //
+                //                        xml?.WriteElementString("MachineID", o.MachineID);
+                //                        xml?.WriteElementString("MachineMACAddress", o.MachineMACAddress);
+                //                        xml?.WriteElementString("MACVendor", o.MACVendor);
+                //                        xml?.WriteElementString("TrackerCreatedOn", o.TrackerCreatedOn.ToString());
+                //
+                //                        xml?.WriteElementString("ExtraBlocksPresent", o.ExtraBlocksPresent);
+                //
+                //                        xml?.WriteEndElement();
+                //
+                //                        if (_fluentCommandLineParser.Object.XmlDirectory?.Length > 0)
+                //                        {
+                //                            SaveXML(o, _fluentCommandLineParser.Object.XmlDirectory);
+                //                        }
+                //                    }
+
+
+                //Close CSV stuff
+                swAuto?.Flush();
+                swAuto?.Close();
+
+                //Close XML
+                xml?.WriteEndElement();
+                xml?.WriteEndDocument();
+                xml?.Flush();
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(
+                    $"Error exporting Automatic Destinations data! Error: {ex.Message}");
+            }
+        }
+    
 
         private static bool IsAutomaticDestinationFile(string file)
         {
@@ -567,7 +592,7 @@ namespace JLECmd
             return signature == sig;
         }
 
-        private static CustomCsvOut GetCsvFormat(LnkFile lnk)
+        private static CustomCsvOut GetCustomCsvFormat(LnkFile lnk)
         {
             var csOut = new CustomCsvOut
             {
@@ -660,19 +685,153 @@ namespace JLECmd
             return csOut;
         }
 
-        private static void DumpToJson(LnkFile lnk, bool pretty, string outFile)
+        private static List<AutoCsvOut> GetAutoCsvFormat(AutomaticDestination auto)
+        {
+            var csList = new List<AutoCsvOut>();
+
+            var fs = new FileInfo(auto.SourceFile);
+            var ct = DateTimeOffset.FromFileTime(fs.CreationTime.ToFileTime()).ToUniversalTime();
+            var mt = DateTimeOffset.FromFileTime(fs.LastWriteTime.ToFileTime()).ToUniversalTime();
+            var at = DateTimeOffset.FromFileTime(fs.LastAccessTime.ToFileTime()).ToUniversalTime();
+
+            foreach (var destListEntry in auto.DestListEntries)
+            {
+                var csOut = new AutoCsvOut
+                {
+                    SourceFile = auto.SourceFile,
+                    SourceCreated = ct.ToString(),
+                    SourceModified = mt.ToString(),
+                    SourceAccessed = at.ToString(),
+
+                    DestListVersion = auto.DestListVersion.ToString(),
+                    LastUsedEntryNumber = auto.LastUsedEntryNumber.ToString(),
+                    EntryNumber = destListEntry.EntryNumber.ToString(),
+                    CreationTime = destListEntry.CreatedOn.Year == 1582 ? string.Empty: destListEntry.CreatedOn.ToString(),
+                    LastModified = destListEntry.LastModified.ToString(),
+                    Hostname = destListEntry.Hostname,
+                    MacAddress = destListEntry.MacAddress == "00:00:00:00:00:00" ? string.Empty : destListEntry.MacAddress,
+                    Path = destListEntry.Path,
+                    PinStatus = destListEntry.Pinned.ToString(),
+                    FileBirthDroid = destListEntry.FileBirthDroid.ToString() == "00000000-0000-0000-0000-000000000000" ? string.Empty : destListEntry.FileBirthDroid.ToString(),
+                    FileDroid = destListEntry.FileDroid.ToString() == "00000000-0000-0000-0000-000000000000" ? string.Empty : destListEntry.FileDroid.ToString(),
+                    VolumeBirthDroid = destListEntry.VolumeBirthDroid.ToString() == "00000000-0000-0000-0000-000000000000" ? string.Empty : destListEntry.VolumeBirthDroid.ToString(),
+                    VolumeDroid = destListEntry.VolumeDroid.ToString() == "00000000-0000-0000-0000-000000000000" ? string.Empty : destListEntry.VolumeDroid.ToString(),
+
+                    TargetCreated =
+        destListEntry.Lnk.Header.TargetCreationDate.Year == 1601 ? string.Empty : destListEntry.Lnk.Header.TargetCreationDate.ToString(),
+                    TargetModified =
+        destListEntry.Lnk.Header.TargetModificationDate.Year == 1601
+            ? string.Empty
+            : destListEntry.Lnk.Header.TargetModificationDate.ToString(),
+                    TargetAccessed =
+        destListEntry.Lnk.Header.TargetLastAccessedDate.Year == 1601
+            ? string.Empty
+            : destListEntry.Lnk.Header.TargetLastAccessedDate.ToString(),
+                    CommonPath = destListEntry.Lnk.CommonPath,
+                    DriveLabel = destListEntry.Lnk.VolumeInfo?.VolumeLabel,
+                    DriveSerialNumber = destListEntry.Lnk.VolumeInfo?.DriveSerialNumber,
+                    DriveType = destListEntry.Lnk.VolumeInfo == null ? "(None)" : GetDescriptionFromEnumValue(destListEntry.Lnk.VolumeInfo.DriveType),
+                    FileAttributes = destListEntry.Lnk.Header.FileAttributes.ToString(),
+                    FileSize = destListEntry.Lnk.Header.FileSize,
+                    HeaderFlags = destListEntry.Lnk.Header.DataFlags.ToString(),
+                    LocalPath = destListEntry.Lnk.LocalPath,
+                    RelativePath = destListEntry.Lnk.RelativePath
+                };
+
+                if (destListEntry.Lnk.TargetIDs?.Count > 0)
+                {
+                    csOut.TargetIDAbsolutePath = GetAbsolutePathFromTargetIDs(destListEntry.Lnk.TargetIDs);
+                }
+
+                csOut.WorkingDirectory = destListEntry.Lnk.WorkingDirectory;
+
+                var ebPresent = string.Empty;
+
+                if (destListEntry.Lnk.ExtraBlocks.Count > 0)
+                {
+                    var names = new List<string>();
+
+                    foreach (var extraDataBase in destListEntry.Lnk.ExtraBlocks)
+                    {
+                        names.Add(extraDataBase.GetType().Name);
+                    }
+
+                    ebPresent = string.Join(", ", names);
+                }
+
+                csOut.ExtraBlocksPresent = ebPresent;
+
+                var tnb = destListEntry.Lnk.ExtraBlocks.SingleOrDefault(t => t.GetType().Name.ToUpper() == "TRACKERDATABASEBLOCK");
+
+                if (tnb != null)
+                {
+                    var tnbBlock = tnb as TrackerDataBaseBlock;
+
+                    csOut.TrackerCreatedOn = tnbBlock?.CreationTime.ToString();
+
+                    csOut.MachineID = tnbBlock?.MachineId;
+                    csOut.MachineMACAddress = tnbBlock?.MacAddress;
+                }
+
+                if (destListEntry.Lnk.TargetIDs?.Count > 0)
+                {
+                    var si = destListEntry.Lnk.TargetIDs.Last();
+
+                    if (si.ExtensionBlocks?.Count > 0)
+                    {
+                        var eb = si.ExtensionBlocks?.Last();
+                        if (eb is Beef0004)
+                        {
+                            var eb4 = eb as Beef0004;
+                            if (eb4.MFTInformation.MFTEntryNumber != null)
+                            {
+                                csOut.TargetMFTEntryNumber = $"0x{eb4.MFTInformation.MFTEntryNumber.Value.ToString("X")}";
+                            }
+
+                            if (eb4.MFTInformation.MFTSequenceNumber != null)
+                            {
+                                csOut.TargetMFTSequenceNumber =
+                                    $"0x{eb4.MFTInformation.MFTSequenceNumber.Value.ToString("X")}";
+                            }
+                        }
+                    }
+                }
+
+                csList.Add(csOut);
+            }
+
+
+
+
+
+            return csList;
+        }
+
+        private static void DumpToJsonAuto(AutomaticDestination auto, bool pretty, string outFile)
         {
             if (pretty)
             {
-                File.WriteAllText(outFile, lnk.Dump());
+                File.WriteAllText(outFile,auto.Dump());
             }
             else
             {
-                File.WriteAllText(outFile, lnk.ToJson());
+                File.WriteAllText(outFile, auto.ToJson());
             }
         }
 
-        private static void SaveXML(CustomCsvOut csout, string outDir)
+        private static void DumpToJsonCustom(CustomDestination cust, bool pretty, string outFile)
+        {
+            if (pretty)
+            {
+                File.WriteAllText(outFile, cust.Dump());
+            }
+            else
+            {
+                File.WriteAllText(outFile, cust.ToJson());
+            }
+        }
+
+        private static void SaveJsonCustom(CustomDestination cust, bool pretty, string outDir)
         {
             try
             {
@@ -682,19 +841,18 @@ namespace JLECmd
                 }
 
                 var outName =
-                    $"{DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss")}_{Path.GetFileName(csout.SourceFile)}.xml";
+                    $"{DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss")}_{Path.GetFileName(cust.SourceFile)}.json";
                 var outFile = Path.Combine(outDir, outName);
 
-
-                File.WriteAllText(outFile, csout.ToXml());
+                DumpToJsonCustom(cust, pretty, outFile);
             }
             catch (Exception ex)
             {
-                _logger.Error($"Error exporting XML for '{csout.SourceFile}'. Error: {ex.Message}");
+                _logger.Error($"Error exporting json for '{cust.SourceFile}'. Error: {ex.Message}");
             }
         }
 
-        private static void SaveJson(LnkFile lnk, bool pretty, string outDir)
+        private static void SaveJsonAuto(AutomaticDestination auto, bool pretty, string outDir)
         {
             try
             {
@@ -704,14 +862,14 @@ namespace JLECmd
                 }
 
                 var outName =
-                    $"{DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss")}_{Path.GetFileName(lnk.SourceFile)}.json";
+                    $"{DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss")}_{Path.GetFileName(auto.SourceFile)}.json";
                 var outFile = Path.Combine(outDir, outName);
 
-                DumpToJson(lnk, pretty, outFile);
+                DumpToJsonAuto(auto, pretty, outFile);
             }
             catch (Exception ex)
             {
-                _logger.Error($"Error exporting json for '{lnk.SourceFile}'. Error: {ex.Message}");
+                _logger.Error($"Error exporting json for '{auto.SourceFile}'. Error: {ex.Message}");
             }
         }
 
@@ -773,6 +931,7 @@ namespace JLECmd
                 {
                     _logger.Info($"Entry #: {autoDestList.EntryNumber}");
                     _logger.Info($"  Path: {autoDestList.Path}");
+                    _logger.Info($"Pinned: {autoDestList.Pinned}");
                     _logger.Info($"  Created on: {autoDestList.CreatedOn}");
                     _logger.Info($"  Last modified: {autoDestList.LastModified}");
                     _logger.Info($"  Hostname: {autoDestList.Hostname}");
@@ -1121,7 +1280,7 @@ namespace JLECmd
                 //                                    if (b71.PropertyStore?.Sheets.Count > 0)
                 //                                    {
                 //                                        _logger.Fatal(
-                //                                            "Property stores found! Please email lnk file to saericzimmerman@gmail.com so support can be added!!");
+                //                                            "Property stores found! Please email auto file to saericzimmerman@gmail.com so support can be added!!");
                 //                                    }
                 //
                 //                                    break;
@@ -1183,7 +1342,7 @@ namespace JLECmd
                 //                                    break;
                 //                                default:
                 //                                    _logger.Fatal(
-                //                                        $">> UNMAPPED Type! Please email lnk file to saericzimmerman@gmail.com so support can be added!");
+                //                                        $">> UNMAPPED Type! Please email auto file to saericzimmerman@gmail.com so support can be added!");
                 //                                    _logger.Fatal($">>{shellBag}");
                 //                                    break;
                 //                            }
@@ -1414,13 +1573,13 @@ namespace JLECmd
                     entryNum += 1;
 
 
-                    
+
 
                 }
 
 
-                
-                
+
+
 
 //                _logger.Warn("--- DestList entries ---");
 //                foreach (var autoDestList in customDest.DestList)
@@ -1805,7 +1964,7 @@ namespace JLECmd
                 //                                    if (b71.PropertyStore?.Sheets.Count > 0)
                 //                                    {
                 //                                        _logger.Fatal(
-                //                                            "Property stores found! Please email lnk file to saericzimmerman@gmail.com so support can be added!!");
+                //                                            "Property stores found! Please email auto file to saericzimmerman@gmail.com so support can be added!!");
                 //                                    }
                 //
                 //                                    break;
@@ -1867,7 +2026,7 @@ namespace JLECmd
                 //                                    break;
                 //                                default:
                 //                                    _logger.Fatal(
-                //                                        $">> UNMAPPED Type! Please email lnk file to saericzimmerman@gmail.com so support can be added!");
+                //                                        $">> UNMAPPED Type! Please email auto file to saericzimmerman@gmail.com so support can be added!");
                 //                                    _logger.Fatal($">>{shellBag}");
                 //                                    break;
                 //                            }
@@ -2050,23 +2209,6 @@ namespace JLECmd
             return null;
         }
 
-        private static string GetVendorFromMac(string macAddress)
-        {
-            //00-00-00	XEROX CORPORATION
-            //"00:14:22:0d:94:04"
-
-            var mac = string.Join("-", macAddress.Split(':').Take(3)).ToUpperInvariant();
-            // .Replace(":", "-").ToUpper();
-
-            var vendor = "(Unknown vendor)";
-
-            if (_macList.ContainsKey(mac))
-            {
-                vendor = _macList[mac];
-            }
-
-            return vendor;
-        }
 
         private static void SetupNLog()
         {
@@ -2090,13 +2232,30 @@ namespace JLECmd
 
     public sealed class AutoCsvOut
     {
-        //
-
-        //lnk file info
+        //jump list info
         public string SourceFile { get; set; }
         public string SourceCreated { get; set; }
         public string SourceModified { get; set; }
         public string SourceAccessed { get; set; }
+
+       public string DestListVersion { get; set; }
+       public string LastUsedEntryNumber { get; set; }
+
+        //destlist entry
+        public string EntryNumber { get; set; }
+        public string CreationTime { get; set; }
+        public string LastModified { get; set; }
+        public string Hostname { get; set; }
+        public string MacAddress { get; set; }
+        public string Path { get; set; }
+        public string PinStatus { get; set; }
+        public string FileBirthDroid { get; set; }
+        public string FileDroid { get; set; }
+        public string VolumeBirthDroid { get; set; }
+        public string VolumeDroid { get; set; }
+
+
+        //lnk file info
         public string TargetCreated { get; set; }
         public string TargetModified { get; set; }
         public string TargetAccessed { get; set; }
@@ -2165,12 +2324,15 @@ namespace JLECmd
 
         public bool IncludeLnkDetail { get; set; }
 
-        public string CsvFile { get; set; }
-        public string XmlDirectory { get; set; }
+        public string CsvDirectory { get; set; }
         public string xHtmlDirectory { get; set; }
 
         public bool Quiet { get; set; }
 
         //  public bool LocalTime { get; set; }
+
+        public string DateTimeFormat { get; set; }
+
+        public bool PreciseTimestamps { get; set; }
     }
 }
