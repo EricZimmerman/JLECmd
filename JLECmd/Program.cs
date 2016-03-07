@@ -120,7 +120,7 @@ namespace JLECmd
 
             _fluentCommandLineParser.Setup(arg => arg.IncludeLnkDetail).As("ld")
                 .WithDescription(
-                    "When true, include more information about auto files (for full auto details, dump lnk files using --dumpTo and process with LECmd")
+                    "When true, include more information about auto files (for full auto details, dump lnk files using --dumpTo and process with LECmd)")
                 .SetDefault(false);
 
             _fluentCommandLineParser.Setup(arg => arg.LnkDumpDirectory).As("dumpTo")
@@ -1133,7 +1133,7 @@ namespace JLECmd
 
                     _logger.Warn("--- DestList information ---");
                     _logger.Info($"  Expected DestList entries:  {autoDest.DestListCount:N0}");
-                    _logger.Info($"  Actual DestList entriesL {autoDest.DestListCount.ToString("N0")}");
+                    _logger.Info($"  Actual DestList entries: {autoDest.DestListCount.ToString("N0")}");
                     _logger.Info($"  DestList version: {autoDest.DestListVersion}");
 
 
