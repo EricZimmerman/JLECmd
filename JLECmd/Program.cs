@@ -125,7 +125,7 @@ namespace JLECmd
 
             _fluentCommandLineParser.Setup(arg => arg.LnkDumpDirectory).As("dumpTo")
                 .WithDescription(
-                    "The directory to use when exporting embedded lnk files")
+                    "Directory to save exported lnk files\r\n")
                 .SetDefault(string.Empty);
 
             _fluentCommandLineParser.Setup(arg => arg.DateTimeFormat)
@@ -145,12 +145,12 @@ namespace JLECmd
                 "\r\n\r\nAuthor: Eric Zimmerman (saericzimmerman@gmail.com)" +
                 "\r\nhttps://github.com/EricZimmerman/JLECmd";
 
-            var footer = @"Examples: JLECmd.exe -f ""C:\Temp\f01b4d95cf55d32a.customDestinations-ms""" + "\r\n\t " +
-                         @" JLECmd.exe -f ""C:\Temp\f01b4d95cf55d32a.customDestinations-ms"" --json ""D:\jsonOutput"" --jsonpretty" +
+            var footer = @"Examples: JLECmd.exe -f ""C:\Temp\f01b4d95cf55d32a.customDestinations-ms"" --mp" + "\r\n\t " +
+                         @" JLECmd.exe -f ""C:\Temp\f01b4d95cf55d32a.automaticDestinations-ms"" --json ""D:\jsonOutput"" --jsonpretty" +
                          "\r\n\t " +
-                         @" JLECmd.exe -d ""C:\CustomDestinations"" --csv ""c:\temp"" -q" +
+                         @" JLECmd.exe -d ""C:\CustomDestinations"" --csv ""c:\temp"" --html ""c:\temp"" -q" +
                          "\r\n\t " +
-                         @" JLECmd.exe -d ""C:\Temp"" --all" + "\r\n\t" +
+                         @" JLECmd.exe -d ""C:\Users\e\AppData\Roaming\Microsoft\Windows\Recent"" --dt ""ddd yyyy MM dd HH:mm:SS.fff"" " + "\r\n\t" +
                          "\r\n\t" +
                          "  Short options (single letter) are prefixed with a single dash. Long commands are prefixed with two dashes\r\n";
 
