@@ -10,6 +10,7 @@ using System.Xml;
 using ExtensionBlocks;
 using Fclp;
 using Fclp.Internals.Extensions;
+using JLECmd.Properties;
 using JumpList.Automatic;
 using JumpList.Custom;
 using Lnk;
@@ -96,10 +97,10 @@ namespace JLECmd
                     "Directory to save CSV (tab separated) formatted results to. Be sure to include the full path in double quotes");
 
 
-//            _fluentCommandLineParser.Setup(arg => arg.xHtmlDirectory)
-//                .As("html")
-//                .WithDescription(
-//                    "Directory to save xhtml formatted results to. Be sure to include the full path in double quotes");
+            _fluentCommandLineParser.Setup(arg => arg.xHtmlDirectory)
+                .As("html")
+                .WithDescription(
+                    "Directory to save xhtml formatted results to. Be sure to include the full path in double quotes");
 
             _fluentCommandLineParser.Setup(arg => arg.JsonDirectory)
                 .As("json")
@@ -147,7 +148,7 @@ namespace JLECmd
             var footer = @"Examples: JLECmd.exe -f ""C:\Temp\f01b4d95cf55d32a.customDestinations-ms""" + "\r\n\t " +
                          @" JLECmd.exe -f ""C:\Temp\f01b4d95cf55d32a.customDestinations-ms"" --json ""D:\jsonOutput"" --jsonpretty" +
                          "\r\n\t " +
-                         @" JLECmd.exe -d ""C:\CustomDestinations"" --csv ""c:\temp\jumplist_out.tsv"" --html c:\temp -q" +
+                         @" JLECmd.exe -d ""C:\CustomDestinations"" --csv ""c:\temp"" -q" +
                          "\r\n\t " +
                          @" JLECmd.exe -d ""C:\Temp"" --all" + "\r\n\t" +
                          "\r\n\t" +
@@ -341,7 +342,6 @@ namespace JLECmd
                 }
             }
 
-
             //export lnks if requested
             if (_fluentCommandLineParser.Object.LnkDumpDirectory.Length > 0)
             {
@@ -392,7 +392,6 @@ namespace JLECmd
                     automaticDestination.DumpAllLnkFiles(outDir);
                 }
             }
-
 
             if (_processedAutoFiles.Count > 0)
             {
@@ -448,15 +447,15 @@ namespace JLECmd
                 if (_fluentCommandLineParser.Object.xHtmlDirectory?.Length > 0)
                 {
                     var outDir = Path.Combine(_fluentCommandLineParser.Object.xHtmlDirectory,
-                        $"{DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss")}_JLECmd_Output_for_{_fluentCommandLineParser.Object.xHtmlDirectory.Replace(@":\", "_").Replace(@"\", "_")}");
+                        $"{DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss")}_JLECmd_Custom_Output_for_{_fluentCommandLineParser.Object.xHtmlDirectory.Replace(@":\", "_").Replace(@"\", "_")}");
 
                     if (Directory.Exists(outDir) == false)
                     {
                         Directory.CreateDirectory(outDir);
                     }
 
-                    //                        File.WriteAllText(Path.Combine(outDir, "normalize.css"), Resources.normalize);
-                    //                        File.WriteAllText(Path.Combine(outDir, "style.css"), Resources.style);
+                                            File.WriteAllText(Path.Combine(outDir, "normalize.css"), Resources.normalize);
+                                            File.WriteAllText(Path.Combine(outDir, "style.css"), Resources.style);
 
                     var outFile = Path.Combine(_fluentCommandLineParser.Object.xHtmlDirectory, outDir, "index.xhtml");
 
@@ -484,61 +483,64 @@ namespace JLECmd
                             _fluentCommandLineParser.Object.JsonDirectory);
                     }
 
-                    var o = GetCustomCsvFormat(processedFile);
+                    var records = GetCustomCsvFormat(processedFile);
 
                     try
                     {
-                        csvCustom?.WriteRecords(o);
+                        csvCustom?.WriteRecords(records);
                     }
                     catch (Exception ex)
                     {
                         _logger.Error(
                             $"Error writing record for '{processedFile.SourceFile}' to '{_fluentCommandLineParser.Object.CsvDirectory}'. Error: {ex.Message}");
                     }
+
+
+                    foreach (var o in records)
+                    {
+                        //XHTML
+                        xml?.WriteStartElement("Container");
+                        xml?.WriteElementString("SourceFile", o.SourceFile);
+                        xml?.WriteElementString("SourceCreated", o.SourceCreated);
+                        xml?.WriteElementString("SourceModified", o.SourceModified);
+                        xml?.WriteElementString("SourceAccessed", o.SourceAccessed);
+
+                        xml?.WriteElementString("AppId", o.AppId);
+                        xml?.WriteElementString("AppIdDescription", o.AppIdDescription);
+                        xml?.WriteElementString("EntryName", o.EntryName);
+                   
+
+                        xml?.WriteElementString("TargetCreated", o.TargetCreated);
+                        xml?.WriteElementString("TargetModified", o.TargetModified);
+                        xml?.WriteElementString("TargetAccessed", o.TargetModified);
+                        xml?.WriteElementString("FileSize", o.FileSize.ToString());
+                        xml?.WriteElementString("RelativePath", o.RelativePath);
+                        xml?.WriteElementString("WorkingDirectory", o.WorkingDirectory);
+                        xml?.WriteElementString("FileAttributes", o.FileAttributes);
+                        xml?.WriteElementString("HeaderFlags", o.HeaderFlags);
+                        xml?.WriteElementString("DriveType", o.DriveType);
+                        xml?.WriteElementString("DriveSerialNumber", o.DriveSerialNumber);
+                        xml?.WriteElementString("DriveLabel", o.DriveLabel);
+                        xml?.WriteElementString("LocalPath", o.LocalPath);
+                        xml?.WriteElementString("CommonPath", o.CommonPath);
+
+                        xml?.WriteElementString("TargetIDAbsolutePath", o.TargetIDAbsolutePath);
+
+                        xml?.WriteElementString("TargetMFTEntryNumber", $"{ o.TargetMFTEntryNumber}");
+                        xml?.WriteElementString("TargetMFTSequenceNumber", $"{ o.TargetMFTSequenceNumber}");
+
+                        xml?.WriteElementString("MachineID", o.MachineID);
+                        xml?.WriteElementString("MachineMACAddress", o.MachineMACAddress);
+                        xml?.WriteElementString("TrackerCreatedOn", o.TrackerCreatedOn);
+
+                        xml?.WriteElementString("ExtraBlocksPresent", o.ExtraBlocksPresent);
+
+                        xml?.WriteEndElement();
+                    }
+
                 }
 
-                //
-
-                //
-                //                        //XHTML
-                //                        xml?.WriteStartElement("Container");
-                //                        xml?.WriteElementString("SourceFile", o.SourceFile);
-                //                        xml?.WriteElementString("SourceCreated", o.SourceCreated.ToString());
-                //                        xml?.WriteElementString("SourceModified", o.SourceModified.ToString());
-                //                        xml?.WriteElementString("SourceAccessed", o.SourceAccessed.ToString());
-                //                        xml?.WriteElementString("TargetCreated", o.TargetCreated.ToString());
-                //                        xml?.WriteElementString("TargetModified", o.TargetModified.ToString());
-                //                        xml?.WriteElementString("TargetAccessed", o.TargetModified.ToString());
-                //                        xml?.WriteElementString("FileSize", o.FileSize.ToString());
-                //                        xml?.WriteElementString("RelativePath", o.RelativePath);
-                //                        xml?.WriteElementString("WorkingDirectory", o.WorkingDirectory);
-                //                        xml?.WriteElementString("FileAttributes", o.FileAttributes);
-                //                        xml?.WriteElementString("HeaderFlags", o.HeaderFlags);
-                //                        xml?.WriteElementString("DriveType", o.DriveType);
-                //                        xml?.WriteElementString("DriveSerialNumber", o.DriveSerialNumber);
-                //                        xml?.WriteElementString("DriveLabel", o.DriveLabel);
-                //                        xml?.WriteElementString("LocalPath", o.LocalPath);
-                //                        xml?.WriteElementString("CommonPath", o.CommonPath);
-                //
-                //                        xml?.WriteElementString("TargetIDAbsolutePath", o.TargetIDAbsolutePath);
-                //
-                //                        xml?.WriteElementString("TargetMFTEntryNumber", $"{o.TargetMFTEntryNumber}");
-                //                        xml?.WriteElementString("TargetMFTSequenceNumber", $"{o.TargetMFTSequenceNumber}");
-                //
-                //                        xml?.WriteElementString("MachineID", o.MachineID);
-                //                        xml?.WriteElementString("MachineMACAddress", o.MachineMACAddress);
-                //                        xml?.WriteElementString("MACVendor", o.MACVendor);
-                //                        xml?.WriteElementString("TrackerCreatedOn", o.TrackerCreatedOn.ToString());
-                //
-                //                        xml?.WriteElementString("ExtraBlocksPresent", o.ExtraBlocksPresent);
-                //
-                //                        xml?.WriteEndElement();
-                //
-                //                        if (_fluentCommandLineParser.Object.XmlDirectory?.Length > 0)
-                //                        {
-                //                            SaveXML(o, _fluentCommandLineParser.Object.XmlDirectory);
-                //                        }
-                //                    }
+               
 
 
                 //Close CSV stuff
@@ -600,15 +602,15 @@ namespace JLECmd
                 if (_fluentCommandLineParser.Object.xHtmlDirectory?.Length > 0)
                 {
                     var outDir = Path.Combine(_fluentCommandLineParser.Object.xHtmlDirectory,
-                        $"{DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss")}_JLECmd_Output_for_{_fluentCommandLineParser.Object.xHtmlDirectory.Replace(@":\", "_").Replace(@"\", "_")}");
+                        $"{DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss")}_JLECmd_Automatic_Output_for_{_fluentCommandLineParser.Object.xHtmlDirectory.Replace(@":\", "_").Replace(@"\", "_")}");
 
                     if (Directory.Exists(outDir) == false)
                     {
                         Directory.CreateDirectory(outDir);
                     }
 
-                    //                        File.WriteAllText(Path.Combine(outDir, "normalize.css"), Resources.normalize);
-                    //                        File.WriteAllText(Path.Combine(outDir, "style.css"), Resources.style);
+                                            File.WriteAllText(Path.Combine(outDir, "normalize.css"), Resources.normalize);
+                                            File.WriteAllText(Path.Combine(outDir, "style.css"), Resources.style);
 
                     var outFile = Path.Combine(_fluentCommandLineParser.Object.xHtmlDirectory, outDir, "index.xhtml");
 
@@ -636,62 +638,76 @@ namespace JLECmd
                             _fluentCommandLineParser.Object.JsonDirectory);
                     }
 
-                    var o = GetAutoCsvFormat(processedFile);
+                    var records = GetAutoCsvFormat(processedFile);
 
                     try
                     {
-                        csvAuto?.WriteRecords(o);
+                        csvAuto?.WriteRecords(records);
                     }
                     catch (Exception ex)
                     {
                         _logger.Error(
                             $"Error writing record for '{processedFile.SourceFile}' to '{_fluentCommandLineParser.Object.CsvDirectory}'. Error: {ex.Message}");
                     }
+
+                foreach (var o in records)
+                {
+                       //XHTML
+                                        xml?.WriteStartElement("Container");
+                                        xml?.WriteElementString("SourceFile", o.SourceFile);
+                                        xml?.WriteElementString("SourceCreated", o.SourceCreated);
+                                        xml?.WriteElementString("SourceModified", o.SourceModified);
+                                        xml?.WriteElementString("SourceAccessed", o.SourceAccessed);
+
+                                        xml?.WriteElementString("AppId", o.AppId);
+                                        xml?.WriteElementString("AppIdDescription", o.AppIdDescription);
+                                        xml?.WriteElementString("DestListVersion", o.DestListVersion);
+                                        xml?.WriteElementString("LastUsedEntryNumber", o.LastUsedEntryNumber);
+                                        xml?.WriteElementString("EntryNumber", o.EntryNumber);
+                                        xml?.WriteElementString("CreationTime", o.CreationTime);
+                                        xml?.WriteElementString("LastModified", o.LastModified);
+                                        xml?.WriteElementString("Hostname", o.Hostname);
+                                        xml?.WriteElementString("MacAddress", o.MacAddress);
+                                        xml?.WriteElementString("Path", o.Path);
+                                        xml?.WriteElementString("PinStatus", o.PinStatus);
+                                        xml?.WriteElementString("FileBirthDroid", o.FileBirthDroid);
+                                        xml?.WriteElementString("FileDroid", o.FileDroid);
+                                        xml?.WriteElementString("VolumeBirthDroid", o.VolumeBirthDroid);
+                                        xml?.WriteElementString("VolumeDroid", o.VolumeDroid);
+
+
+                                        xml?.WriteElementString("TargetCreated", o.TargetCreated);
+                                        xml?.WriteElementString("TargetModified", o.TargetModified);
+                                        xml?.WriteElementString("TargetAccessed", o.TargetModified);
+                                        xml?.WriteElementString("FileSize", o.FileSize.ToString());
+                                        xml?.WriteElementString("RelativePath", o.RelativePath);
+                                        xml?.WriteElementString("WorkingDirectory", o.WorkingDirectory);
+                                        xml?.WriteElementString("FileAttributes", o.FileAttributes);
+                                        xml?.WriteElementString("HeaderFlags", o.HeaderFlags);
+                                        xml?.WriteElementString("DriveType", o.DriveType);
+                                        xml?.WriteElementString("DriveSerialNumber", o.DriveSerialNumber);
+                                        xml?.WriteElementString("DriveLabel", o.DriveLabel);
+                                        xml?.WriteElementString("LocalPath", o.LocalPath);
+                                        xml?.WriteElementString("CommonPath", o.CommonPath);
+                
+                                        xml?.WriteElementString("TargetIDAbsolutePath", o.TargetIDAbsolutePath);
+                
+                                        xml?.WriteElementString("TargetMFTEntryNumber", $"{ o.TargetMFTEntryNumber}");
+                                        xml?.WriteElementString("TargetMFTSequenceNumber", $"{ o.TargetMFTSequenceNumber}");
+                
+                                        xml?.WriteElementString("MachineID", o.MachineID);
+                                        xml?.WriteElementString("MachineMACAddress", o.MachineMACAddress);
+                                        xml?.WriteElementString("TrackerCreatedOn", o.TrackerCreatedOn);
+                
+                                        xml?.WriteElementString("ExtraBlocksPresent", o.ExtraBlocksPresent);
+                
+                                        xml?.WriteEndElement(); 
                 }
+                
+                                    
 
-                //
 
-                //
-                //                        //XHTML
-                //                        xml?.WriteStartElement("Container");
-                //                        xml?.WriteElementString("SourceFile", o.SourceFile);
-                //                        xml?.WriteElementString("SourceCreated", o.SourceCreated.ToString());
-                //                        xml?.WriteElementString("SourceModified", o.SourceModified.ToString());
-                //                        xml?.WriteElementString("SourceAccessed", o.SourceAccessed.ToString());
-                //                        xml?.WriteElementString("TargetCreated", o.TargetCreated.ToString());
-                //                        xml?.WriteElementString("TargetModified", o.TargetModified.ToString());
-                //                        xml?.WriteElementString("TargetAccessed", o.TargetModified.ToString());
-                //                        xml?.WriteElementString("FileSize", o.FileSize.ToString());
-                //                        xml?.WriteElementString("RelativePath", o.RelativePath);
-                //                        xml?.WriteElementString("WorkingDirectory", o.WorkingDirectory);
-                //                        xml?.WriteElementString("FileAttributes", o.FileAttributes);
-                //                        xml?.WriteElementString("HeaderFlags", o.HeaderFlags);
-                //                        xml?.WriteElementString("DriveType", o.DriveType);
-                //                        xml?.WriteElementString("DriveSerialNumber", o.DriveSerialNumber);
-                //                        xml?.WriteElementString("DriveLabel", o.DriveLabel);
-                //                        xml?.WriteElementString("LocalPath", o.LocalPath);
-                //                        xml?.WriteElementString("CommonPath", o.CommonPath);
-                //
-                //                        xml?.WriteElementString("TargetIDAbsolutePath", o.TargetIDAbsolutePath);
-                //
-                //                        xml?.WriteElementString("TargetMFTEntryNumber", $"{o.TargetMFTEntryNumber}");
-                //                        xml?.WriteElementString("TargetMFTSequenceNumber", $"{o.TargetMFTSequenceNumber}");
-                //
-                //                        xml?.WriteElementString("MachineID", o.MachineID);
-                //                        xml?.WriteElementString("MachineMACAddress", o.MachineMACAddress);
-                //                        xml?.WriteElementString("MACVendor", o.MACVendor);
-                //                        xml?.WriteElementString("TrackerCreatedOn", o.TrackerCreatedOn.ToString());
-                //
-                //                        xml?.WriteElementString("ExtraBlocksPresent", o.ExtraBlocksPresent);
-                //
-                //                        xml?.WriteEndElement();
-                //
-                //                        if (_fluentCommandLineParser.Object.XmlDirectory?.Length > 0)
-                //                        {
-                //                            SaveXML(o, _fluentCommandLineParser.Object.XmlDirectory);
-                //                        }
-                //                    }
-
+                }
 
                 //Close CSV stuff
                 swAuto?.Flush();
@@ -714,9 +730,19 @@ namespace JLECmd
         {
             const ulong signature = 0xe11ab1a1e011cfd0;
 
-            var sig = BitConverter.ToUInt64(File.ReadAllBytes(file), 0);
+            try
+            {
+                var sig = BitConverter.ToUInt64(File.ReadAllBytes(file), 0);
 
-            return signature == sig;
+                return signature == sig;
+            }
+            catch (Exception)
+            {
+                
+            }
+
+            return false;
+
         }
 
         private static List<CustomCsvOut> GetCustomCsvFormat(CustomDestination cust)
@@ -831,7 +857,6 @@ namespace JLECmd
                     csList.Add(csOut);
                 }
             }
-
 
             return csList;
         }
@@ -1431,607 +1456,7 @@ namespace JLECmd
                     }
                 }
 
-
-//                _logger.Warn("--- DestList entries ---");
-//                foreach (var autoDestList in customDest.DestList)
-//                {
-//                    _logger.Info($"Entry #: {autoDestList.EntryNumber}");
-//                    _logger.Info($"  Path: {autoDestList.Path}");
-//                    _logger.Info($"  Created on: {autoDestList.CreatedOn}");
-//                    _logger.Info($"  Last modified: {autoDestList.LastModified}");
-//                    _logger.Info($"  Hostname: {autoDestList.Hostname}");
-//                    _logger.Info($"  Mac Address: {autoDestList.MacAddress}");
-//                    _logger.Info($"  Lnk target created: {autoDestList.Lnk.Header.TargetCreationDate}");
-//                    _logger.Info($"  Lnk target modified: {autoDestList.Lnk.Header.TargetModificationDate}");
-//                    _logger.Info($"  Lnk target accessed: {autoDestList.Lnk.Header.TargetLastAccessedDate}");
-//
-//                    _logger.Error("  (More info will be included here)");
-//
-//                    _logger.Info("");
-//                }
-
-
-                //                if (DestList != null)
-                //                {
-                //                    DestListCount = DestList.Header.NumberOfEntries;
-                //                    PinnedDestListCount = DestList.Header.NumberOfPinnedEntries;
-                //                    DestListVersion = DestList.Header.Version;
-                //
-                //                    foreach (var entry in DestList.Entries)
-                //                    {
-                //
-                //                        var dirItem =
-                //                                        _oleContainer.Directory.SingleOrDefault(
-                //                                            t => t.DirectoryName.ToLowerInvariant() == entry.EntryNumber.ToString("X").ToLowerInvariant());
-                //
-                //                        if (dirItem != null)
-                //                        {
-                //                            var p = _oleContainer.GetPayloadForDirectory(dirItem);
-                //
-                //                            var dlnk = new LnkFile(p, $"{sourceFile}__Directory name {entry.EntryNumber}");
-                //
-                //                            var dl = new AutoDestList(entry, dlnk);
-                //
-                //                            DestList.Add(dl);
-                //                        }
-                //
-                //
-                //
-                //                    }
-                //                }
-
-
-                //                if (_fluentCommandLineParser.Object.Quiet == false)
-                //                {
-                //                    _logger.Error($"Source file: {autoDest.SourceFile}");
-                //                    _logger.Info($"  Source created:  {autoDest.SourceCreated}");
-                //                    _logger.Info($"  Source modified: {autoDest.SourceModified}");
-                //                    _logger.Info($"  Source accessed: {autoDest.SourceAccessed}");
-                //                    _logger.Info("");
-                //
-                //                    _logger.Warn("--- Header ---");
-                //
-                //                    var tc = autoDest.Header.TargetCreationDate.Year == 1601 ? "" : autoDest.Header.TargetCreationDate.ToString();
-                //                    var tm = autoDest.Header.TargetModificationDate.Year == 1601 ? "" : autoDest.Header.TargetModificationDate.ToString();
-                //                    var ta = autoDest.Header.TargetLastAccessedDate.Year == 1601 ? "" : autoDest.Header.TargetLastAccessedDate.ToString();
-                //
-                //                    _logger.Info($"  Target created:  {tc}");
-                //                    _logger.Info($"  Target modified: {tm}");
-                //                    _logger.Info($"  Target accessed: {ta}");
-                //                    _logger.Info("");
-                //                    _logger.Info($"  File size: {autoDest.Header.FileSize:N0}");
-                //                    _logger.Info($"  Flags: {autoDest.Header.DataFlags}");
-                //                    _logger.Info($"  File attributes: {autoDest.Header.FileAttributes}");
-                //
-                //                    if (autoDest.Header.HotKey.Length > 0)
-                //                    {
-                //                        _logger.Info($"  Hot key: {autoDest.Header.HotKey}");
-                //                    }
-                //
-                //                    _logger.Info($"  Icon index: {autoDest.Header.IconIndex}");
-                //                    _logger.Info(
-                //                        $"  Show window: {autoDest.Header.ShowWindow} ({GetDescriptionFromEnumValue(autoDest.Header.ShowWindow)})");
-                //
-                //                    _logger.Info("");
-                //
-                //                    if ((autoDest.Header.DataFlags & Header.DataFlag.HasName) == Header.DataFlag.HasName)
-                //                    {
-                //                        _logger.Info($"Name: {autoDest.Name}");
-                //                    }
-                //
-                //                    if ((autoDest.Header.DataFlags & Header.DataFlag.HasRelativePath) == Header.DataFlag.HasRelativePath)
-                //                    {
-                //                        _logger.Info($"Relative Path: {autoDest.RelativePath}");
-                //                    }
-                //
-                //                    if ((autoDest.Header.DataFlags & Header.DataFlag.HasWorkingDir) == Header.DataFlag.HasWorkingDir)
-                //                    {
-                //                        _logger.Info($"Working Directory: {autoDest.WorkingDirectory}");
-                //                    }
-                //
-                //                    if ((autoDest.Header.DataFlags & Header.DataFlag.HasArguments) == Header.DataFlag.HasArguments)
-                //                    {
-                //                        _logger.Info($"Arguments: {autoDest.Arguments}");
-                //                    }
-                //
-                //                    if ((autoDest.Header.DataFlags & Header.DataFlag.HasIconLocation) == Header.DataFlag.HasIconLocation)
-                //                    {
-                //                        _logger.Info($"Icon Location: {autoDest.IconLocation}");
-                //                    }
-                //
-                //                    if ((autoDest.Header.DataFlags & Header.DataFlag.HasLinkInfo) == Header.DataFlag.HasLinkInfo)
-                //                    {
-                //                        _logger.Info("");
-                //                        _logger.Error("--- Link information ---");
-                //                        _logger.Info($"Flags: {autoDest.LocationFlags}");
-                //
-                //                        if (autoDest.VolumeInfo != null)
-                //                        {
-                //                            _logger.Info("");
-                //                            _logger.Warn(">>Volume information");
-                //                            _logger.Info($"  Drive type: {GetDescriptionFromEnumValue(autoDest.VolumeInfo.DriveType)}");
-                //                            _logger.Info($"  Serial number: {autoDest.VolumeInfo.DriveSerialNumber}");
-                //
-                //                            var label = autoDest.VolumeInfo.VolumeLabel.Length > 0
-                //                                ? autoDest.VolumeInfo.VolumeLabel
-                //                                : "(No label)";
-                //
-                //                            _logger.Info($"  Label: {label}");
-                //                        }
-                //
-                //                        if (autoDest.NetworkShareInfo != null)
-                //                        {
-                //                            _logger.Info("");
-                //                            _logger.Warn("  Network share information");
-                //
-                //                            if (autoDest.NetworkShareInfo.DeviceName.Length > 0)
-                //                            {
-                //                                _logger.Info($"    Device name: {autoDest.NetworkShareInfo.DeviceName}");
-                //                            }
-                //
-                //                            _logger.Info($"    Share name: {autoDest.NetworkShareInfo.NetworkShareName}");
-                //
-                //                            _logger.Info($"    Provider type: {autoDest.NetworkShareInfo.NetworkProviderType}");
-                //                            _logger.Info($"    Share flags: {autoDest.NetworkShareInfo.ShareFlags}");
-                //                            _logger.Info("");
-                //                        }
-                //
-                //                        if (autoDest.LocalPath?.Length > 0)
-                //                        {
-                //                            _logger.Info($"  Local path: {autoDest.LocalPath}");
-                //                        }
-                //
-                //                        if (autoDest.CommonPath.Length > 0)
-                //                        {
-                //                            _logger.Info($"  Common path: {autoDest.CommonPath}");
-                //                        }
-                //                    }
-                //
-                //                    if (_fluentCommandLineParser.Object.NoTargetIDList)
-                //                    {
-                //                        _logger.Info("");
-                //                        _logger.Warn($"(Target ID information suppressed. Lnk TargetID count: {autoDest.TargetIDs.Count:N0})");
-                //                    }
-                //
-                //                    if (autoDest.TargetIDs.Count > 0 && !_fluentCommandLineParser.Object.NoTargetIDList)
-                //                    {
-                //                        _logger.Info("");
-                //
-                //                        var absPath = string.Empty;
-                //
-                //                        foreach (var shellBag in autoDest.TargetIDs)
-                //                        {
-                //                            absPath += shellBag.Value + @"\";
-                //                        }
-                //
-                //                        _logger.Error("--- Target ID information (Format: Type ==> Value) ---");
-                //                        _logger.Info("");
-                //                        _logger.Info($"  Absolute path: {GetAbsolutePathFromTargetIDs(autoDest.TargetIDs)}");
-                //                        _logger.Info("");
-                //
-                //                        foreach (var shellBag in autoDest.TargetIDs)
-                //                        {
-                //                            //HACK
-                //                            //This is a total hack until i can refactor some shellbag code to clean things up
-                //
-                //                            var val = shellBag.Value.IsNullOrEmpty() ? "(None)" : shellBag.Value;
-                //
-                //                            _logger.Info($"  -{shellBag.FriendlyName} ==> {val}");
-                //
-                //                            switch (shellBag.GetType().Name.ToUpper())
-                //                            {
-                //                                case "SHELLBAG0X32":
-                //                                    var b32 = shellBag as ShellBag0X32;
-                //
-                //                                    _logger.Info($"    Short name: {b32.ShortName}");
-                //                                    _logger.Info($"    Modified: {b32.LastModificationTime}");
-                //
-                //                                    var extensionNumber32 = 0;
-                //                                    if (b32.ExtensionBlocks.Count > 0)
-                //                                    {
-                //                                        _logger.Info($"    Extension block count: {b32.ExtensionBlocks.Count:N0}");
-                //                                        _logger.Info("");
-                //                                        foreach (var extensionBlock in b32.ExtensionBlocks)
-                //                                        {
-                //                                            _logger.Info(
-                //                                                $"    --------- Block {extensionNumber32:N0} ({extensionBlock.GetType().Name}) ---------");
-                //                                            if (extensionBlock is Beef0004)
-                //                                            {
-                //                                                var b4 = extensionBlock as Beef0004;
-                //
-                //                                                _logger.Info($"    Long name: {b4.LongName}");
-                //                                                if (b4.LocalisedName.Length > 0)
-                //                                                {
-                //                                                    _logger.Info($"    Localized name: {b4.LocalisedName}");
-                //                                                }
-                //
-                //                                                _logger.Info($"    Created: {b4.CreatedOnTime}");
-                //                                                _logger.Info($"    Last access: {b4.LastAccessTime}");
-                //                                                if (b4.MFTInformation.MFTEntryNumber > 0)
-                //                                                {
-                //                                                    _logger.Info(
-                //                                                        $"    MFT entry/sequence #: {b4.MFTInformation.MFTEntryNumber}/{b4.MFTInformation.MFTSequenceNumber} (0x{b4.MFTInformation.MFTEntryNumber:X}/0x{b4.MFTInformation.MFTSequenceNumber:X})");
-                //                                                }
-                //                                            }
-                //                                            else if (extensionBlock is Beef0025)
-                //                                            {
-                //                                                var b25 = extensionBlock as Beef0025;
-                //                                                _logger.Info(
-                //                                                    $"    Filetime 1: {b25.FileTime1}, Filetime 2: {b25.FileTime2}");
-                //                                            }
-                //                                            else if (extensionBlock is Beef0003)
-                //                                            {
-                //                                                var b3 = extensionBlock as Beef0003;
-                //                                                _logger.Info($"    GUID: {b3.GUID1} ({b3.GUID1Folder})");
-                //                                            }
-                //                                            else
-                //                                            {
-                //                                                _logger.Info($"    {extensionBlock}");
-                //                                            }
-                //
-                //                                            extensionNumber32 += 1;
-                //                                        }
-                //                                    }
-                //
-                //                                    break;
-                //                                case "SHELLBAG0X31":
-                //
-                //                                    var b3x = shellBag as ShellBag0X31;
-                //
-                //                                    _logger.Info($"    Short name: {b3x.ShortName}");
-                //                                    _logger.Info($"    Modified: {b3x.LastModificationTime}");
-                //
-                //                                    var extensionNumber = 0;
-                //                                    if (b3x.ExtensionBlocks.Count > 0)
-                //                                    {
-                //                                        _logger.Info($"    Extension block count: {b3x.ExtensionBlocks.Count:N0}");
-                //                                        _logger.Info("");
-                //                                        foreach (var extensionBlock in b3x.ExtensionBlocks)
-                //                                        {
-                //                                            _logger.Info(
-                //                                                $"    --------- Block {extensionNumber:N0} ({extensionBlock.GetType().Name}) ---------");
-                //                                            if (extensionBlock is Beef0004)
-                //                                            {
-                //                                                var b4 = extensionBlock as Beef0004;
-                //
-                //                                                _logger.Info($"    Long name: {b4.LongName}");
-                //                                                if (b4.LocalisedName.Length > 0)
-                //                                                {
-                //                                                    _logger.Info($"    Localized name: {b4.LocalisedName}");
-                //                                                }
-                //
-                //                                                _logger.Info($"    Created: {b4.CreatedOnTime}");
-                //                                                _logger.Info($"    Last access: {b4.LastAccessTime}");
-                //                                                if (b4.MFTInformation.MFTEntryNumber > 0)
-                //                                                {
-                //                                                    _logger.Info(
-                //                                                        $"    MFT entry/sequence #: {b4.MFTInformation.MFTEntryNumber}/{b4.MFTInformation.MFTSequenceNumber} (0x{b4.MFTInformation.MFTEntryNumber:X}/0x{b4.MFTInformation.MFTSequenceNumber:X})");
-                //                                                }
-                //                                            }
-                //                                            else if (extensionBlock is Beef0025)
-                //                                            {
-                //                                                var b25 = extensionBlock as Beef0025;
-                //                                                _logger.Info(
-                //                                                    $"    Filetime 1: {b25.FileTime1}, Filetime 2: {b25.FileTime2}");
-                //                                            }
-                //                                            else if (extensionBlock is Beef0003)
-                //                                            {
-                //                                                var b3 = extensionBlock as Beef0003;
-                //                                                _logger.Info($"    GUID: {b3.GUID1} ({b3.GUID1Folder})");
-                //                                            }
-                //                                            else
-                //                                            {
-                //                                                _logger.Info($"    {extensionBlock}");
-                //                                            }
-                //
-                //                                            extensionNumber += 1;
-                //                                        }
-                //                                    }
-                //                                    break;
-                //
-                //                                case "SHELLBAG0X00":
-                //                                    var b00 = shellBag as ShellBag0X00;
-                //
-                //                                    if (b00.PropertyStore.Sheets.Count > 0)
-                //                                    {
-                //                                        _logger.Warn("  >> Property store (Format: GUID\\ID Description ==> Value)");
-                //                                        var propCount = 0;
-                //
-                //                                        foreach (var prop in b00.PropertyStore.Sheets)
-                //                                        {
-                //                                            foreach (var propertyName in prop.PropertyNames)
-                //                                            {
-                //                                                propCount += 1;
-                //
-                //                                                var prefix = $"{prop.GUID}\\{propertyName.Key}".PadRight(43);
-                //
-                //                                                var suffix =
-                //                                                    $"{Utils.GetDescriptionFromGuidAndKey(prop.GUID, int.Parse(propertyName.Key))}"
-                //                                                        .PadRight(35);
-                //
-                //                                                _logger.Info($"     {prefix} {suffix} ==> {propertyName.Value}");
-                //                                            }
-                //                                        }
-                //
-                //                                        if (propCount == 0)
-                //                                        {
-                //                                            _logger.Warn("     (Property store is empty)");
-                //                                        }
-                //                                    }
-                //
-                //                                    break;
-                //                                case "SHELLBAG0X01":
-                //                                    var baaaa1f = shellBag as ShellBag0X01;
-                //                                    if (baaaa1f.DriveLetter.Length > 0)
-                //                                    {
-                //                                        _logger.Info($"  Drive letter: {baaaa1f.DriveLetter}");
-                //                                    }
-                //                                    break;
-                //                                case "SHELLBAG0X1F":
-                //
-                //                                    var b1f = shellBag as ShellBag0X1F;
-                //
-                //                                    if (b1f.PropertyStore.Sheets.Count > 0)
-                //                                    {
-                //                                        _logger.Warn("  >> Property store (Format: GUID\\ID Description ==> Value)");
-                //                                        var propCount = 0;
-                //
-                //                                        foreach (var prop in b1f.PropertyStore.Sheets)
-                //                                        {
-                //                                            foreach (var propertyName in prop.PropertyNames)
-                //                                            {
-                //                                                propCount += 1;
-                //
-                //                                                var prefix = $"{prop.GUID}\\{propertyName.Key}".PadRight(43);
-                //
-                //                                                var suffix =
-                //                                                    $"{Utils.GetDescriptionFromGuidAndKey(prop.GUID, int.Parse(propertyName.Key))}"
-                //                                                        .PadRight(35);
-                //
-                //                                                _logger.Info($"     {prefix} {suffix} ==> {propertyName.Value}");
-                //                                            }
-                //                                        }
-                //
-                //                                        if (propCount == 0)
-                //                                        {
-                //                                            _logger.Warn("     (Property store is empty)");
-                //                                        }
-                //                                    }
-                //
-                //                                    break;
-                //                                case "SHELLBAG0X2E":
-                //                                    break;
-                //                                case "SHELLBAG0X2F":
-                //                                    var b2f = shellBag as ShellBag0X2F;
-                //
-                //                                    break;
-                //                                case "SHELLBAG0X40":
-                //                                    break;
-                //                                case "SHELLBAG0X61":
-                //
-                //                                    break;
-                //                                case "SHELLBAG0X71":
-                //                                    var b71 = shellBag as ShellBag0X71;
-                //                                    if (b71.PropertyStore?.Sheets.Count > 0)
-                //                                    {
-                //                                        _logger.Fatal(
-                //                                            "Property stores found! Please email auto file to saericzimmerman@gmail.com so support can be added!!");
-                //                                    }
-                //
-                //                                    break;
-                //                                case "SHELLBAG0X74":
-                //                                    var b74 = shellBag as ShellBag0X74;
-                //
-                //                                    _logger.Info($"    Modified: {b74.LastModificationTime}");
-                //
-                //                                    var extensionNumber74 = 0;
-                //                                    if (b74.ExtensionBlocks.Count > 0)
-                //                                    {
-                //                                        _logger.Info($"    Extension block count: {b74.ExtensionBlocks.Count:N0}");
-                //                                        _logger.Info("");
-                //                                        foreach (var extensionBlock in b74.ExtensionBlocks)
-                //                                        {
-                //                                            _logger.Info(
-                //                                                $"    --------- Block {extensionNumber74:N0} ({extensionBlock.GetType().Name}) ---------");
-                //                                            if (extensionBlock is Beef0004)
-                //                                            {
-                //                                                var b4 = extensionBlock as Beef0004;
-                //
-                //                                                _logger.Info($"    Long name: {b4.LongName}");
-                //                                                if (b4.LocalisedName.Length > 0)
-                //                                                {
-                //                                                    _logger.Info($"    Localized name: {b4.LocalisedName}");
-                //                                                }
-                //
-                //                                                _logger.Info($"    Created: {b4.CreatedOnTime}");
-                //                                                _logger.Info($"    Last access: {b4.LastAccessTime}");
-                //                                                if (b4.MFTInformation.MFTEntryNumber > 0)
-                //                                                {
-                //                                                    _logger.Info(
-                //                                                        $"    MFT entry/sequence #: {b4.MFTInformation.MFTEntryNumber}/{b4.MFTInformation.MFTSequenceNumber} (0x{b4.MFTInformation.MFTEntryNumber:X}/0x{b4.MFTInformation.MFTSequenceNumber:X})");
-                //                                                }
-                //                                            }
-                //                                            else if (extensionBlock is Beef0025)
-                //                                            {
-                //                                                var b25 = extensionBlock as Beef0025;
-                //                                                _logger.Info(
-                //                                                    $"    Filetime 1: {b25.FileTime1}, Filetime 2: {b25.FileTime2}");
-                //                                            }
-                //                                            else if (extensionBlock is Beef0003)
-                //                                            {
-                //                                                var b3 = extensionBlock as Beef0003;
-                //                                                _logger.Info($"    GUID: {b3.GUID1} ({b3.GUID1Folder})");
-                //                                            }
-                //                                            else
-                //                                            {
-                //                                                _logger.Info($"    {extensionBlock}");
-                //                                            }
-                //
-                //                                            extensionNumber74 += 1;
-                //                                        }
-                //                                    }
-                //                                    break;
-                //                                case "SHELLBAG0XC3":
-                //                                    break;
-                //                                case "SHELLBAGZIPCONTENTS":
-                //                                    break;
-                //                                default:
-                //                                    _logger.Fatal(
-                //                                        $">> UNMAPPED Type! Please email auto file to saericzimmerman@gmail.com so support can be added!");
-                //                                    _logger.Fatal($">>{shellBag}");
-                //                                    break;
-                //                            }
-                //
-                //                            _logger.Info("");
-                //                        }
-                //                        _logger.Error("--- End Target ID information ---");
-                //                    }
-                //
-                //                    if (_fluentCommandLineParser.Object.NoExtraBlocks)
-                //                    {
-                //                        _logger.Info("");
-                //                        _logger.Warn(
-                //                            $"(Extra blocks information suppressed. Lnk Extra block count: {autoDest.ExtraBlocks.Count:N0})");
-                //                    }
-                //
-                //                    if (autoDest.ExtraBlocks.Count > 0 && !_fluentCommandLineParser.Object.NoExtraBlocks)
-                //                    {
-                //                        _logger.Info("");
-                //                        _logger.Error("--- Extra blocks information ---");
-                //                        _logger.Info("");
-                //
-                //                        foreach (var extraDataBase in autoDest.ExtraBlocks)
-                //                        {
-                //                            switch (extraDataBase.GetType().Name)
-                //                            {
-                //                                case "ConsoleDataBlock":
-                //                                    var cdb = extraDataBase as ConsoleDataBlock;
-                //                                    _logger.Warn(">> Console data block");
-                //                                    _logger.Info($"   Fill Attributes: {cdb.FillAttributes}");
-                //                                    _logger.Info($"   Popup Attributes: {cdb.PopupFillAttributes}");
-                //                                    _logger.Info(
-                //                                        $"   Buffer Size (Width x Height): {cdb.ScreenWidthBufferSize} x {cdb.ScreenHeightBufferSize}");
-                //                                    _logger.Info(
-                //                                        $"   Window Size (Width x Height): {cdb.WindowWidth} x {cdb.WindowHeight}");
-                //                                    _logger.Info($"   Origin (X/Y): {cdb.WindowOriginX}/{cdb.WindowOriginY}");
-                //                                    _logger.Info($"   Font Size: {cdb.FontSize}");
-                //                                    _logger.Info($"   Is Bold: {cdb.IsBold}");
-                //                                    _logger.Info($"   Face Name: {cdb.FaceName}");
-                //                                    _logger.Info($"   Cursor Size: {cdb.CursorSize}");
-                //                                    _logger.Info($"   Is Full Screen: {cdb.IsFullScreen}");
-                //                                    _logger.Info($"   Is Quick Edit: {cdb.IsQuickEdit}");
-                //                                    _logger.Info($"   Is Insert Mode: {cdb.IsInsertMode}");
-                //                                    _logger.Info($"   Is Auto Positioned: {cdb.IsAutoPositioned}");
-                //                                    _logger.Info($"   History Buffer Size: {cdb.HistoryBufferSize}");
-                //                                    _logger.Info($"   History Buffer Count: {cdb.HistoryBufferCount}");
-                //                                    _logger.Info($"   History Duplicates Allowed: {cdb.HistoryDuplicatesAllowed}");
-                //                                    _logger.Info("");
-                //                                    break;
-                //                                case "ConsoleFEDataBlock":
-                //                                    var cfedb = extraDataBase as ConsoleFeDataBlock;
-                //                                    _logger.Warn(">> Console FE data block");
-                //                                    _logger.Info($"   Code page: {cfedb.CodePage}");
-                //                                    _logger.Info("");
-                //                                    break;
-                //                                case "DarwinDataBlock":
-                //                                    var ddb = extraDataBase as DarwinDataBlock;
-                //                                    _logger.Warn(">> Darwin data block");
-                //                                    _logger.Info($"   Application ID: {ddb.ApplicationIdentifierUnicode}");
-                //                                    _logger.Info("");
-                //                                    break;
-                //                                case "EnvironmentVariableDataBlock":
-                //                                    var evdb = extraDataBase as EnvironmentVariableDataBlock;
-                //                                    _logger.Warn(">> Environment variable data block");
-                //                                    _logger.Info($"   Environment variables: {evdb.EnvironmentVariablesUnicode}");
-                //                                    _logger.Info("");
-                //                                    break;
-                //                                case "IconEnvironmentDataBlock":
-                //                                    var iedb = extraDataBase as IconEnvironmentDataBlock;
-                //                                    _logger.Warn(">> Icon environment data block");
-                //                                    _logger.Info($"   Icon path: {iedb.IconPathUni}");
-                //                                    _logger.Info("");
-                //                                    break;
-                //                                case "KnownFolderDataBlock":
-                //                                    var kfdb = extraDataBase as KnownFolderDataBlock;
-                //                                    _logger.Warn(">> Known folder data block");
-                //                                    _logger.Info(
-                //                                        $"   Known folder GUID: {kfdb.KnownFolderId} ==> {kfdb.KnownFolderName}");
-                //                                    _logger.Info("");
-                //                                    break;
-                //                                case "PropertyStoreDataBlock":
-                //                                    var psdb = extraDataBase as PropertyStoreDataBlock;
-                //
-                //                                    if (psdb.PropertyStore.Sheets.Count > 0)
-                //                                    {
-                //                                        _logger.Warn(
-                //                                            ">> Property store data block (Format: GUID\\ID Description ==> Value)");
-                //                                        var propCount = 0;
-                //
-                //                                        foreach (var prop in psdb.PropertyStore.Sheets)
-                //                                        {
-                //                                            foreach (var propertyName in prop.PropertyNames)
-                //                                            {
-                //                                                propCount += 1;
-                //
-                //                                                var prefix = $"{prop.GUID}\\{propertyName.Key}".PadRight(43);
-                //                                                var suffix =
-                //                                                    $"{Utils.GetDescriptionFromGuidAndKey(prop.GUID, int.Parse(propertyName.Key))}"
-                //                                                        .PadRight(35);
-                //
-                //                                                _logger.Info($"   {prefix} {suffix} ==> {propertyName.Value}");
-                //                                            }
-                //                                        }
-                //
-                //                                        if (propCount == 0)
-                //                                        {
-                //                                            _logger.Warn("   (Property store is empty)");
-                //                                        }
-                //                                    }
-                //                                    _logger.Info("");
-                //                                    break;
-                //                                case "ShimDataBlock":
-                //                                    var sdb = extraDataBase as ShimDataBlock;
-                //                                    _logger.Warn(">> Shimcache data block");
-                //                                    _logger.Info($"   LayerName: {sdb.LayerName}");
-                //                                    _logger.Info("");
-                //                                    break;
-                //                                case "SpecialFolderDataBlock":
-                //                                    var sfdb = extraDataBase as SpecialFolderDataBlock;
-                //                                    _logger.Warn(">> Special folder data block");
-                //                                    _logger.Info($"   Special Folder ID: {sfdb.SpecialFolderId}");
-                //                                    _logger.Info("");
-                //                                    break;
-                //                                case "TrackerDataBaseBlock":
-                //                                    var tdb = extraDataBase as TrackerDataBaseBlock;
-                //                                    _logger.Warn(">> Tracker database block");
-                //                                    _logger.Info($"   Machine ID: {tdb.MachineId}");
-                //                                    _logger.Info($"   MAC Address: {tdb.MacAddress}");
-                //                                    _logger.Info($"   MAC Vendor: {GetVendorFromMac(tdb.MacAddress)}");
-                //                                    _logger.Info($"   Creation: {tdb.CreationTime}");
-                //                                    _logger.Info("");
-                //                                    _logger.Info($"   Volume Droid: {tdb.VolumeDroid}");
-                //                                    _logger.Info($"   Volume Droid Birth: {tdb.VolumeDroidBirth}");
-                //                                    _logger.Info($"   File Droid: {tdb.FileDroid}");
-                //                                    _logger.Info($"   File Droid birth: {tdb.FileDroidBirth}");
-                //                                    _logger.Info("");
-                //                                    break;
-                //                                case "VistaAndAboveIDListDataBlock":
-                //                                    var vdb = extraDataBase as VistaAndAboveIdListDataBlock;
-                //                                    _logger.Warn(">> Vista and above ID List data block");
-                //
-                //                                    foreach (var shellBag in vdb.TargetIDs)
-                //                                    {
-                //                                        var val = shellBag.Value.IsNullOrEmpty() ? "(None)" : shellBag.Value;
-                //                                        _logger.Info($"   {shellBag.FriendlyName} ==> {val}");
-                //                                    }
-                //
-                //                                    _logger.Info("");
-                //                                    break;
-                //                            }
-                //                        }
-                //                    }
-                //                }
-                //
+                
                 sw.Stop();
 
                 if (_fluentCommandLineParser.Object.Quiet == false)
