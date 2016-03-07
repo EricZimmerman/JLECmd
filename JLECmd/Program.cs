@@ -210,6 +210,8 @@ namespace JLECmd
             _processedAutoFiles = new List<AutomaticDestination>();
             _processedCustomFiles = new List<CustomDestination>();
 
+            _failedFiles = new List<string>();
+
             if (_fluentCommandLineParser.Object.File?.Length > 0)
             {
                 if (IsAutomaticDestinationFile(_fluentCommandLineParser.Object.File))
@@ -268,7 +270,7 @@ namespace JLECmd
 
                 var jumpFiles = new List<string>();
 
-                _failedFiles = new List<string>();
+        
 
                 try
                 {
