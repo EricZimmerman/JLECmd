@@ -46,7 +46,7 @@ rgtColumn {
 		margin: 0;
 	}
 	    
-	SourceCreated,AppId,AppIdDescription, SourceModified, SourceAccessed, DestListVersion,LastUsedEntryNumber,EntryNumber,CreationTime,LastModified,Hostname,MacAddress,Path,PinStatus,FileBirthDroid,FileDroid,VolumeBirthDroid,VolumeDroid,TargetCreated, TargetModified, TargetAccessed, FileSize,RelativePath, WorkingDirectory, FileAttributes, HeaderFlags, DriveType, DriveSerialNumber, DriveLabel, LocalPath, CommonPath, TargetIDAbsolutePath, TargetMFTEntryNumber, TargetMFTSequenceNumber, MachineID, MachineMACAddress, MACVendor, TrackerCreatedOn, ExtraBlocksPresent {
+	SourceCreated,AppId,AppIdDescription, SourceModified, Arguments,EntryName,SourceAccessed, DestListVersion,LastUsedEntryNumber,EntryNumber,CreationTime,LastModified,Hostname,MacAddress,Path,PinStatus,FileBirthDroid,FileDroid,VolumeBirthDroid,VolumeDroid,TargetCreated, TargetModified, TargetAccessed, FileSize,RelativePath, WorkingDirectory, FileAttributes, HeaderFlags, DriveType, DriveSerialNumber, DriveLabel, LocalPath, CommonPath, TargetIDAbsolutePath, TargetMFTEntryNumber, TargetMFTSequenceNumber, MachineID, MachineMACAddress, MACVendor, TrackerCreatedOn, ExtraBlocksPresent {
 		display: block;
 		width: auto;
 		color: #043F5F;
