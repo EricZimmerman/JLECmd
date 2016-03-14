@@ -1,35 +1,16 @@
-﻿/* Report styling created by: Devon Ackerman
+﻿/* Report styling written by: Devon Ackerman
+ Crafted for JLECmd (automatic & custom JLs)
 					  devon@aeiforensics.com
-                    Last Updated: 2016.02.16 
+					Last Updated: 2016.03.10
 -------------------------------------------- */
 
-Wrapper_Forensicator {
-	width: 1400px;
-	height: auto;
-	border: medium #146B99 solid;
-	resize: both;
-	overflow: auto;
-	min-width: 50px;  /* min-width  */
-	min-height: 50px; /* min-height */
-	display: block;
-	padding: 0;
-	margin: 10px;
-	background-color: #D9ECFF;
+/* If value is empty, then hide container. Comment out to show empty fields */
+:empty {
+	display:none !important;
 }
 
-	Forensicator {
-		letter-spacing: 1pt;
-		line-height: 1;
-		word-spacing: 2pt;
-		font-size: 14px;
-		font-family: verdana, sans-serif;
-		text-align: right;
-		padding: 2px 15px 0 2px;
-		margin: 2px 0 4px 0;
-	}
-
 Container {
-	width: 1400px;
+	width: 1200px;
 	height: auto;
 	border: medium #146B99 solid;
 	resize: both;
@@ -40,21 +21,19 @@ Container {
 	padding: 0;
 	margin: 10px;
 	background-color: #E9F0F4;
+	position: relative;
 }
 
-	/* Remove comment tags to show .LNK before and above path statement
-	Container:before {
-	  display: block;
-	  width: auto;
-	  font-weight: bold;
-	  font-size: 24px;
-	  content: ".LNK File";
-	  background-color: #146B99;
-	  color: #F18C14;
-	  padding: 2px 0 0 2px;
-	  margin: 0;
-	}
-	*/
+lftColumn {
+	position: relative;
+	float: left;
+	width: 6%;
+}
+rgtColumn {
+	position: relative;
+	float: left;
+	width: 94%;	
+}
 
 	SourceFile {
 		display: block;
@@ -67,7 +46,7 @@ Container {
 		margin: 0;
 	}
 	    
-	SourceCreated,AppId,AppIdDescription, SourceModified, SourceAccessed, DestListVersion,LastUsedEntryNumber,EntryNumber,CreationTime,LastModified,Hostname,MacAddress,Path,PinStatus,FileBirthDroid,FileDroid,VolumeBirthDroid,VolumeDroid,TargetCreated, TargetModified, TargetAccessed, FileSize, RelativePath, WorkingDirectory, FileAttributes, HeaderFlags, DriveType, DriveSerialNumber, DriveLabel, LocalPath, CommonPath, TargetIDAbsolutePath, TargetMFTEntryNumber, TargetMFTSequenceNumber, MachineID, MachineMACAddress, MACVendor, TrackerCreatedOn, ExtraBlocksPresent {
+	SourceCreated,AppId,AppIdDescription, SourceModified, SourceAccessed, DestListVersion,LastUsedEntryNumber,EntryNumber,CreationTime,LastModified,Hostname,MacAddress,Path,PinStatus,FileBirthDroid,FileDroid,VolumeBirthDroid,VolumeDroid,TargetCreated, TargetModified, TargetAccessed, FileSize,RelativePath, WorkingDirectory, FileAttributes, HeaderFlags, DriveType, DriveSerialNumber, DriveLabel, LocalPath, CommonPath, TargetIDAbsolutePath, TargetMFTEntryNumber, TargetMFTSequenceNumber, MachineID, MachineMACAddress, MACVendor, TrackerCreatedOn, ExtraBlocksPresent {
 		display: block;
 		width: auto;
 		color: #043F5F;
@@ -96,7 +75,6 @@ Container {
 		padding: 2px 20px 0 2px;
 		margin: 2px 0 4px 0;
 	}
-	
 		/* Remove comment tags to show (UTC) after timestamp
 		SourceCreated:after {
 			content: " (UTC)";
@@ -118,9 +96,8 @@ Container {
 		padding: 2px 15px 0 2px;
 		margin: 2px 0 4px 0;
 	}
-	
 		/* Remove comment tags to show (UTC) after timestamp
-		SourceCreated:after {
+		SourceModified:after {
 			content: " (UTC)";
 			color: #A6A8A9;
 		}
@@ -140,9 +117,8 @@ Container {
 		padding: 2px 10px 0 2px;
 		margin: 2px 0 4px 0;
 	}
-	
 		/* Remove comment tags to show (UTC) after timestamp
-		SourceCreated:after {
+		SourceAccessed:after {
 			content: " (UTC)";
 			color: #A6A8A9;
 		}
@@ -162,9 +138,9 @@ Container {
 		padding: 2px 23px 0 2px;
 		margin: 2px 0 4px 0;
 	}
-	
+
 		/* Remove comment tags to show (UTC) after timestamp
-		SourceCreated:after {
+		TargetCreated:after {
 			content: " (UTC)";
 			color: #A6A8A9;
 		}
@@ -184,9 +160,8 @@ Container {
 		padding: 2px 18px 0 2px;
 		margin: 2px 0 4px 0;
 	}
-	
 		/* Remove comment tags to show (UTC) after timestamp
-		SourceCreated:after {
+		TargetModified:after {
 			content: " (UTC)";
 			color: #A6A8A9;
 		}
@@ -203,46 +178,53 @@ Container {
 		font-family: verdana, sans-serif;
 		text-align: right;
 		text-decoration: underline;
-		padding: 2px 10px 0 2px;
+		padding: 2px 13px 0 2px;
 		margin: 2px 0 4px 0;
 	}
-	
-	
-
-CreationTime:before {
-		content: "Creation Time:";
-		display: inline;
-		letter-spacing: 1pt;
-		line-height: 1;
-		word-spacing: 2pt;
-		font-weight: bold;
-		font-size: 12px;
-		font-family: verdana, sans-serif;
-		text-align: right;
-		text-decoration: underline;
-		padding: 2px 10px 0 2px;
-		margin: 2px 0 4px 0;
-	}
-
-LastModified:before {
-		content: "Last Modified:";
-		display: inline;
-		letter-spacing: 1pt;
-		line-height: 1;
-		word-spacing: 2pt;
-		font-weight: bold;
-		font-size: 12px;
-		font-family: verdana, sans-serif;
-		text-align: right;
-		text-decoration: underline;
-		padding: 2px 10px 0 2px;
-		margin: 2px 0 4px 0;
-	}
-
-
-	
 		/* Remove comment tags to show (UTC) after timestamp
-		SourceCreated:after {
+		TargetAccessed:after {
+			content: " (UTC)";
+			color: #A6A8A9;
+		}
+		*/
+
+	CreationTime:before {
+			content: "Creation Time:";
+			display: inline;
+			letter-spacing: 1pt;
+			line-height: 1;
+			word-spacing: 2pt;
+			font-weight: bold;
+			font-size: 12px;
+			font-family: verdana, sans-serif;
+			text-align: right;
+			text-decoration: underline;
+			padding: 2px 32px 0 2px;
+			margin: 2px 0 4px 0;
+		}
+		/* Remove comment tags to show (UTC) after timestamp
+		CreationTime:after {
+			content: " (UTC)";
+			color: #A6A8A9;
+		}
+		*/
+		
+	LastModified:before {
+			content: "Last Modified:";
+			display: inline;
+			letter-spacing: 1pt;
+			line-height: 1;
+			word-spacing: 2pt;
+			font-weight: bold;
+			font-size: 12px;
+			font-family: verdana, sans-serif;
+			text-align: right;
+			text-decoration: underline;
+			padding: 2px 36px 0 2px;
+			margin: 2px 0 4px 0;
+		}
+		/* Remove comment tags to show (UTC) after timestamp
+		LastModified:after {
 			content: " (UTC)";
 			color: #A6A8A9;
 		}
@@ -262,7 +244,6 @@ LastModified:before {
 		padding: 2px 10px 0 2px;
 		margin: 2px 0 4px 0;
 	}
-	
 		FileSize:after {
 			content: " (bytes)";
 			color: #A6A8A9;
@@ -283,21 +264,28 @@ LastModified:before {
 		margin: 2px 0 4px 0;
 	}
 	
-DestListVersion:before {
-		content: "DestList version:";
-		display: inline;
-		letter-spacing: 1pt;
-		line-height: 1;
-		word-spacing: 2pt;
-		font-weight: bold;
-		font-size: 12px;
-		font-family: verdana, sans-serif;
-		text-align: right;
-		text-decoration: underline;
-		padding: 2px 10px 0 2px;
-		margin: 2px 0 4px 0;
+	DestListVersion:before {
+			content: "DestList version:";
+			display: inline;
+			letter-spacing: 1pt;
+			line-height: 1;
+			word-spacing: 2pt;
+			font-weight: bold;
+			font-size: 12px;
+			font-family: verdana, sans-serif;
+			text-align: right;
+			text-decoration: underline;
+			padding: 2px 10px 0 2px;
+			margin: 2px 0 4px 0;
+		}
+
+	EntryNumber_large {
+		font-size: 35px;
+		padding: 0 0 0 30px;
+		text-shadow: 2px 2px #B0B0B0;
+		color: #3f88c5;
 	}
-	
+		
 	EntryNumber:before {
 		content: "Entry Number:";
 		display: inline;
@@ -328,7 +316,7 @@ DestListVersion:before {
 		margin: 2px 0 4px 0;
 	}
 
-MacAddress:before {
+	MacAddress:before {
 		content: "Mac Address:";
 		display: inline;
 		letter-spacing: 1pt;
@@ -342,9 +330,8 @@ MacAddress:before {
 		padding: 2px 10px 0 2px;
 		margin: 2px 0 4px 0;
 	}
-	
-	
-VolumeDroid:before {
+		
+	VolumeDroid:before {
 		content: "Volume Droid:";
 		display: inline;
 		letter-spacing: 1pt;
@@ -359,7 +346,7 @@ VolumeDroid:before {
 		margin: 2px 0 4px 0;
 	}
 
-VolumeBirthDroid:before {
+	VolumeBirthDroid:before {
 		content: "Volume Birth Droid:";
 		display: inline;
 		letter-spacing: 1pt;
@@ -374,8 +361,7 @@ VolumeBirthDroid:before {
 		margin: 2px 0 4px 0;
 	}
 	
-	
-FileDroid:before {
+	FileDroid:before {
 		content: "File Droid:";
 		display: inline;
 		letter-spacing: 1pt;
@@ -390,7 +376,7 @@ FileDroid:before {
 		margin: 2px 0 4px 0;
 	}
 
-FileBirthDroid:before {
+	FileBirthDroid:before {
 		content: "File Birth Droid:";
 		display: inline;
 		letter-spacing: 1pt;
@@ -405,10 +391,7 @@ FileBirthDroid:before {
 		margin: 2px 0 4px 0;
 	}
 	
-	
-
-
-Path:before {
+	Path:before {
 		content: "Path:";
 		display: inline;
 		letter-spacing: 1pt;
@@ -423,8 +406,8 @@ Path:before {
 		margin: 2px 0 4px 0;
 	}
 
-PinStatus:before {
-		content: "Pinned:";
+	PinStatus:before {
+		content: "Pin Status:";
 		display: inline;
 		letter-spacing: 1pt;
 		line-height: 1;
@@ -437,7 +420,6 @@ PinStatus:before {
 		padding: 2px 10px 0 2px;
 		margin: 2px 0 4px 0;
 	}
-	
 	
 	LastUsedEntryNumber:before {
 		content: "Last Used Entry Number:";
@@ -518,7 +500,7 @@ PinStatus:before {
 		content: "Header Flags:";
 		display: inline;
 		letter-spacing: 1pt;
-		line-height: 1;
+		line-height: 1.4;
 		word-spacing: 2pt;
 		font-weight: bold;
 		font-size: 12px;
@@ -573,21 +555,21 @@ PinStatus:before {
 		padding: 2px 10px 0 2px;
 		margin: 2px 0 4px 0;
 	}
-	
-	LocalPath:before {
-		content: "Local Path:";
-		display: inline;
-		letter-spacing: 1pt;
-		line-height: 1;
-		word-spacing: 2pt;
-		font-weight: bold;
-		font-size: 12px;
-		font-family: verdana, sans-serif;
-		text-align: right;
-		text-decoration: underline;
-		padding: 2px 10px 0 2px;
-		margin: 2px 0 4px 0;
-	}
+
+		LocalPath:before {
+			content: "Local Path:";
+			display: inline;
+			letter-spacing: 1pt;
+			line-height: 1;
+			word-spacing: 2pt;
+			font-weight: bold;
+			font-size: 12px;
+			font-family: verdana, sans-serif;
+			text-align: right;
+			text-decoration: underline;
+			padding: 2px 10px 0 2px;
+			margin: 2px 0 4px 0;
+		}
 	
 	CommonPath:before {
 		content: "Common Path:";
@@ -604,8 +586,44 @@ PinStatus:before {
 		margin: 2px 0 4px 0;
 	}
 	
+		EntryName:before {
+		content: "Entry Name:";
+		display: inline;
+		letter-spacing: 1pt;
+		line-height: 1;
+		word-spacing: 2pt;
+		font-weight: bold;
+		font-size: 12px;
+		font-family: verdana, sans-serif;
+		text-align: right;
+		text-decoration: underline;
+		padding: 2px 10px 0 2px;
+		margin: 2px 0 4px 0;
+	}
+	
+	
+	
+
+TargetIDAbsolutePath {
+		color: maroon;	
+	}
 	TargetIDAbsolutePath:before {
 		content: "TargetID Absolute Path:";
+		display: inline;
+		letter-spacing: 1pt;
+		line-height: 1;
+		word-spacing: 2pt;
+		font-weight: bold;
+		font-size: 12px;
+		font-family: verdana, sans-serif;
+		text-align: right;
+		text-decoration: underline;
+		padding: 2px 10px 0 2px;
+		margin: 2px 0 4px 0;
+	}
+	
+	Arguments:before {
+		content: "Arguments:";
 		display: inline;
 		letter-spacing: 1pt;
 		line-height: 1;
@@ -622,40 +640,38 @@ PinStatus:before {
 	TargetMFTEntryNumber {
 		color: maroon;	
 	}
-	
-	TargetMFTEntryNumber:before {
-		content: "Target $MFT Entry Number:";
-		display: inline;
-		letter-spacing: 1pt;
-		line-height: 1;
-		word-spacing: 2pt;
-		font-weight: bold;
-		font-size: 12px;
-		font-family: verdana, sans-serif;
-		text-align: right;
-		text-decoration: underline;
-		padding: 2px 10px 0 2px;
-		margin: 2px 0 4px 0;
-	}
+		TargetMFTEntryNumber:before {
+			content: "Target $MFT Entry Number:";
+			display: inline;
+			letter-spacing: 1pt;
+			line-height: 1;
+			word-spacing: 2pt;
+			font-weight: bold;
+			font-size: 12px;
+			font-family: verdana, sans-serif;
+			text-align: right;
+			text-decoration: underline;
+			padding: 2px 10px 0 2px;
+			margin: 2px 0 4px 0;
+		}
 	
 	TargetMFTSequenceNumber {
 		color: maroon;	
 	}
-	
-	TargetMFTSequenceNumber:before {
-		content: "Target $MFT Sequence Number:";
-		display: inline;
-		letter-spacing: 1pt;
-		line-height: 1;
-		word-spacing: 2pt;
-		font-weight: bold;
-		font-size: 12px;
-		font-family: verdana, sans-serif;
-		text-align: right;
-		text-decoration: underline;
-		padding: 2px 10px 0 2px;
-		margin: 2px 0 4px 0;
-	}
+		TargetMFTSequenceNumber:before {
+			content: "Target $MFT Sequence Number:";
+			display: inline;
+			letter-spacing: 1pt;
+			line-height: 1;
+			word-spacing: 2pt;
+			font-weight: bold;
+			font-size: 12px;
+			font-family: verdana, sans-serif;
+			text-align: right;
+			text-decoration: underline;
+			padding: 2px 10px 0 2px;
+			margin: 2px 0 4px 0;
+		}
 	
 	MachineID:before {
 		content: "MachineID:";
@@ -701,14 +717,13 @@ PinStatus:before {
 		padding: 2px 10px 0 2px;
 		margin: 2px 0 4px 0;
 	}
-	
 		MACVendor:after {
-			content: " (vendor not included in source .lnk file, auto-resolved by LECmd for end-user upon parsing)";
+			content: " (vendor not included in source file, auto-resolved by tool for end-user upon parsing)";
 			color: #A6A8A9;
 		}
 	
 	TrackerCreatedOn:before {
-		content: "Tracker Created On:";
+		content: "Tracker Created:";
 		display: inline;
 		letter-spacing: 1pt;
 		line-height: 1;
@@ -718,7 +733,7 @@ PinStatus:before {
 		font-family: verdana, sans-serif;
 		text-align: right;
 		text-decoration: underline;
-		padding: 2px 10px 0 2px;
+		padding: 2px 14px 0 2px;
 		margin: 2px 0 4px 0;
 	}
 	
