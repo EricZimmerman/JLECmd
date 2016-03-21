@@ -150,7 +150,8 @@ namespace JLECmd
                          "\r\n\t " +
                          @" JLECmd.exe -d ""C:\CustomDestinations"" --csv ""c:\temp"" --html ""c:\temp"" -q" +
                          "\r\n\t " +
-                         @" JLECmd.exe -d ""C:\Users\e\AppData\Roaming\Microsoft\Windows\Recent"" --dt ""ddd yyyy MM dd HH:mm:SS.fff"" " + "\r\n\t" +
+                         @" JLECmd.exe -d ""C:\Users\e\AppData\Roaming\Microsoft\Windows\Recent"" --dt ""ddd yyyy MM dd HH:mm:SS.fff"" " +
+                         "\r\n\t" +
                          "\r\n\t" +
                          "  Short options (single letter) are prefixed with a single dash. Long commands are prefixed with two dashes\r\n";
 
@@ -270,7 +271,6 @@ namespace JLECmd
 
                 var jumpFiles = new List<string>();
 
-        
 
                 try
                 {
@@ -463,7 +463,7 @@ namespace JLECmd
                     }
 
                     File.WriteAllText(Path.Combine(styleDir, "normalize.css"), Resources.normalize);
-                                            File.WriteAllText(Path.Combine(styleDir, "style.css"), Resources.style);
+                    File.WriteAllText(Path.Combine(styleDir, "style.css"), Resources.style);
 
                     var outFile = Path.Combine(_fluentCommandLineParser.Object.xHtmlDirectory, outDir, "index.xhtml");
 
@@ -504,23 +504,41 @@ namespace JLECmd
                     }
 
 
+                    //XHTML
+                    xml?.WriteStartElement("Container");
+
+                    xml?.WriteStartElement("SourceFile");
+                    xml?.WriteAttributeString("title", "Note: Location and name of processed Jump List");
+                    xml?.WriteString(processedFile.SourceFile);
+                    xml?.WriteEndElement();
+
+
+                    var fs = new FileInfo(processedFile.SourceFile);
+                    var ct = DateTimeOffset.FromFileTime(fs.CreationTime.ToFileTime()).ToUniversalTime();
+                    var mt = DateTimeOffset.FromFileTime(fs.LastWriteTime.ToFileTime()).ToUniversalTime();
+                    var at = DateTimeOffset.FromFileTime(fs.LastAccessTime.ToFileTime()).ToUniversalTime();
+
+                    xml?.WriteElementString("SourceCreated", ct.ToString(_fluentCommandLineParser.Object.DateTimeFormat));
+                    xml?.WriteElementString("SourceModified",
+                        mt.ToString(_fluentCommandLineParser.Object.DateTimeFormat));
+                    xml?.WriteElementString("SourceAccessed",
+                        at.ToString(_fluentCommandLineParser.Object.DateTimeFormat));
+
+                    xml?.WriteElementString("AppId", processedFile.AppId.AppId);
+                    xml?.WriteElementString("AppIdDescription", processedFile.AppId.Description);
+
+                    var index = 0;
                     foreach (var o in records)
                     {
-                        //XHTML
-                        xml?.WriteStartElement("Container");
-
-                        xml?.WriteStartElement("SourceFile");
-                        xml?.WriteAttributeString("title", "Note: Location and name of processed Jump List");
-                        xml?.WriteString(o.SourceFile);
+                        xml?.WriteStartElement("lftColumn");
+                        xml?.WriteStartElement("EntryNumber_large");
+                        xml?.WriteAttributeString("title", "Note: Lnk position in file");
+                        xml?.WriteString(index.ToString());
+                        xml?.WriteEndElement();
                         xml?.WriteEndElement();
 
+                        xml?.WriteStartElement("rgtColumn");
 
-                        xml?.WriteElementString("SourceCreated", o.SourceCreated);
-                        xml?.WriteElementString("SourceModified", o.SourceModified);
-                        xml?.WriteElementString("SourceAccessed", o.SourceAccessed);
-
-                        xml?.WriteElementString("AppId", o.AppId);
-                        xml?.WriteElementString("AppIdDescription", o.AppIdDescription);
                         xml?.WriteElementString("EntryName", o.EntryName);
 
                         xml?.WriteElementString("TargetIDAbsolutePath", o.TargetIDAbsolutePath);
@@ -544,9 +562,8 @@ namespace JLECmd
                         xml?.WriteElementString("LocalPath", o.LocalPath);
                         xml?.WriteElementString("CommonPath", o.CommonPath);
 
-                        xml?.WriteElementString("TargetMFTEntryNumber", $"{ o.TargetMFTEntryNumber}");
-                        xml?.WriteElementString("TargetMFTSequenceNumber", $"{ o.TargetMFTSequenceNumber}");
-
+                        xml?.WriteElementString("TargetMFTEntryNumber", $"{o.TargetMFTEntryNumber}");
+                        xml?.WriteElementString("TargetMFTSequenceNumber", $"{o.TargetMFTSequenceNumber}");
 
 
                         xml?.WriteElementString("MachineID", o.MachineID);
@@ -556,11 +573,11 @@ namespace JLECmd
                         xml?.WriteElementString("ExtraBlocksPresent", o.ExtraBlocksPresent);
 
                         xml?.WriteEndElement();
+                        index += 1;
                     }
 
+                    xml?.WriteEndElement();
                 }
-
-               
 
 
                 //Close CSV stuff
@@ -684,17 +701,20 @@ namespace JLECmd
                     xml?.WriteStartElement("Container");
                     xml?.WriteElementString("SourceFile", processedFile.SourceFile);
                     xml?.WriteElementString("SourceCreated", ct.ToString(_fluentCommandLineParser.Object.DateTimeFormat));
-                    xml?.WriteElementString("SourceModified", mt.ToString(_fluentCommandLineParser.Object.DateTimeFormat));
-                    xml?.WriteElementString("SourceAccessed", at.ToString(_fluentCommandLineParser.Object.DateTimeFormat));
+                    xml?.WriteElementString("SourceModified",
+                        mt.ToString(_fluentCommandLineParser.Object.DateTimeFormat));
+                    xml?.WriteElementString("SourceAccessed",
+                        at.ToString(_fluentCommandLineParser.Object.DateTimeFormat));
 
                     xml?.WriteElementString("AppId", processedFile.AppId.AppId);
                     xml?.WriteElementString("AppIdDescription", processedFile.AppId.Description);
                     xml?.WriteElementString("DestListVersion", processedFile.DestListVersion.ToString());
+                    xml?.WriteElementString("LastUsedEntryNumber", processedFile.LastUsedEntryNumber.ToString());
 
                     foreach (var o in records)
-                {
-                       //XHTML
-                                        
+                    {
+                        //XHTML
+
 
                         xml?.WriteStartElement("lftColumn");
 
@@ -707,58 +727,55 @@ namespace JLECmd
 
                         xml?.WriteStartElement("rgtColumn");
 
-                        xml?.WriteElementString("LastUsedEntryNumber", o.LastUsedEntryNumber);
-                                        xml?.WriteElementString("EntryNumber", o.EntryNumber);
-                                        xml?.WriteElementString("CreationTime", o.CreationTime);
-                                        xml?.WriteElementString("LastModified", o.LastModified);
-                                        xml?.WriteElementString("Hostname", o.Hostname);
-                                        xml?.WriteElementString("MacAddress", o.MacAddress);
-                                        xml?.WriteElementString("Path", o.Path);
-                                        xml?.WriteElementString("PinStatus", o.PinStatus);
-                                        xml?.WriteElementString("FileBirthDroid", o.FileBirthDroid);
-                                        xml?.WriteElementString("FileDroid", o.FileDroid);
-                                        xml?.WriteElementString("VolumeBirthDroid", o.VolumeBirthDroid);
-                                        xml?.WriteElementString("VolumeDroid", o.VolumeDroid);
 
+                        //       xml?.WriteElementString("EntryNumber", o.EntryNumber);
                         xml?.WriteElementString("TargetIDAbsolutePath", o.TargetIDAbsolutePath);
+
+                        xml?.WriteElementString("CreationTime", o.CreationTime);
+                        xml?.WriteElementString("LastModified", o.LastModified);
+                        xml?.WriteElementString("Hostname", o.Hostname);
+                        xml?.WriteElementString("MacAddress", o.MacAddress);
+                        xml?.WriteElementString("Path", o.Path);
+                        xml?.WriteElementString("PinStatus", o.PinStatus);
+                        xml?.WriteElementString("FileBirthDroid", o.FileBirthDroid);
+                        xml?.WriteElementString("FileDroid", o.FileDroid);
+                        xml?.WriteElementString("VolumeBirthDroid", o.VolumeBirthDroid);
+                        xml?.WriteElementString("VolumeDroid", o.VolumeDroid);
+
+
                         if (o.Arguments.Length > 0)
                         {
                             xml?.WriteElementString("Arguments", o.Arguments);
                         }
 
                         xml?.WriteElementString("TargetCreated", o.TargetCreated);
-                                        xml?.WriteElementString("TargetModified", o.TargetModified);
-                                        xml?.WriteElementString("TargetAccessed", o.TargetModified);
-                                        xml?.WriteElementString("FileSize", o.FileSize.ToString());
-                                        xml?.WriteElementString("RelativePath", o.RelativePath);
-                                        xml?.WriteElementString("WorkingDirectory", o.WorkingDirectory);
-                                        xml?.WriteElementString("FileAttributes", o.FileAttributes);
-                                        xml?.WriteElementString("HeaderFlags", o.HeaderFlags);
-                                        xml?.WriteElementString("DriveType", o.DriveType);
-                                        xml?.WriteElementString("DriveSerialNumber", o.DriveSerialNumber);
-                                        xml?.WriteElementString("DriveLabel", o.DriveLabel);
-                                        xml?.WriteElementString("LocalPath", o.LocalPath);
-                                        xml?.WriteElementString("CommonPath", o.CommonPath);
-                
-                                       
-                
-                                        xml?.WriteElementString("TargetMFTEntryNumber", $"{ o.TargetMFTEntryNumber}");
-                                        xml?.WriteElementString("TargetMFTSequenceNumber", $"{ o.TargetMFTSequenceNumber}");
-                
-                                        xml?.WriteElementString("MachineID", o.MachineID);
-                                        xml?.WriteElementString("MachineMACAddress", o.MachineMACAddress);
-                                        xml?.WriteElementString("TrackerCreatedOn", o.TrackerCreatedOn);
-                
-                                        xml?.WriteElementString("ExtraBlocksPresent", o.ExtraBlocksPresent);
-                
-                                        xml?.WriteEndElement();
+                        xml?.WriteElementString("TargetModified", o.TargetModified);
+                        xml?.WriteElementString("TargetAccessed", o.TargetModified);
+                        xml?.WriteElementString("FileSize", o.FileSize.ToString());
+                        xml?.WriteElementString("RelativePath", o.RelativePath);
+                        xml?.WriteElementString("WorkingDirectory", o.WorkingDirectory);
+                        xml?.WriteElementString("FileAttributes", o.FileAttributes);
+                        xml?.WriteElementString("HeaderFlags", o.HeaderFlags);
+                        xml?.WriteElementString("DriveType", o.DriveType);
+                        xml?.WriteElementString("DriveSerialNumber", o.DriveSerialNumber);
+                        xml?.WriteElementString("DriveLabel", o.DriveLabel);
+                        xml?.WriteElementString("LocalPath", o.LocalPath);
+                        xml?.WriteElementString("CommonPath", o.CommonPath);
 
-                       
+
+                        xml?.WriteElementString("TargetMFTEntryNumber", $"{o.TargetMFTEntryNumber}");
+                        xml?.WriteElementString("TargetMFTSequenceNumber", $"{o.TargetMFTSequenceNumber}");
+
+                        xml?.WriteElementString("MachineID", o.MachineID);
+                        xml?.WriteElementString("MachineMACAddress", o.MachineMACAddress);
+                        xml?.WriteElementString("TrackerCreatedOn", o.TrackerCreatedOn);
+
+                        xml?.WriteElementString("ExtraBlocksPresent", o.ExtraBlocksPresent);
+
+                        xml?.WriteEndElement();
                     }
 
                     xml?.WriteEndElement();
-
-
                 }
 
                 //Close CSV stuff
@@ -790,11 +807,9 @@ namespace JLECmd
             }
             catch (Exception)
             {
-                
             }
 
             return false;
-
         }
 
         private static List<CustomCsvOut> GetCustomCsvFormat(CustomDestination cust)
@@ -847,7 +862,7 @@ namespace JLECmd
 
                     csOut.Arguments = string.Empty;
                     if ((lnk.Header.DataFlags & Header.DataFlag.HasArguments) ==
-                               Header.DataFlag.HasArguments)
+                        Header.DataFlag.HasArguments)
                     {
                         csOut.Arguments = lnk.Arguments ?? string.Empty;
                     }
@@ -997,7 +1012,6 @@ namespace JLECmd
                     RelativePath = destListEntry.Lnk?.RelativePath
                 };
 
-               
 
                 if (destListEntry.Lnk == null)
                 {
@@ -1012,7 +1026,7 @@ namespace JLECmd
 
                 csOut.Arguments = string.Empty;
                 if ((destListEntry.Lnk.Header.DataFlags & Header.DataFlag.HasArguments) ==
-                             Header.DataFlag.HasArguments)
+                    Header.DataFlag.HasArguments)
                 {
                     csOut.Arguments = destListEntry.Lnk.Arguments ?? string.Empty;
                 }
@@ -1524,7 +1538,7 @@ namespace JLECmd
                     }
                 }
 
-                
+
                 sw.Stop();
 
                 if (_fluentCommandLineParser.Object.Quiet == false)
@@ -1623,8 +1637,8 @@ namespace JLECmd
 
         public string TrackerCreatedOn { get; set; }
         public string ExtraBlocksPresent { get; set; }
-    public string Arguments { get; set; }
-}
+        public string Arguments { get; set; }
+    }
 
     public sealed class CustomCsvOut
     {

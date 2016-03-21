@@ -1,7 +1,7 @@
 ﻿/* Report styling written by: Devon Ackerman
  Crafted for JLECmd (automatic & custom JLs)
-					  devon@aeiforensics.com
-					Last Updated: 2016.03.10
+                      devon@aeiforensics.com
+                    Last Updated: 2016.03.16
 -------------------------------------------- */
 
 /* If value is empty, then hide container. Comment out to show empty fields */
@@ -46,7 +46,7 @@ rgtColumn {
 		margin: 0;
 	}
 	    
-	SourceCreated,AppId,AppIdDescription, SourceModified, Arguments,EntryName,SourceAccessed, DestListVersion,LastUsedEntryNumber,EntryNumber,CreationTime,LastModified,Hostname,MacAddress,Path,PinStatus,FileBirthDroid,FileDroid,VolumeBirthDroid,VolumeDroid,TargetCreated, TargetModified, TargetAccessed, FileSize,RelativePath, WorkingDirectory, FileAttributes, HeaderFlags, DriveType, DriveSerialNumber, DriveLabel, LocalPath, CommonPath, TargetIDAbsolutePath, TargetMFTEntryNumber, TargetMFTSequenceNumber, MachineID, MachineMACAddress, MACVendor, TrackerCreatedOn, ExtraBlocksPresent {
+	SourceCreated, AppId, AppIdDescription, Arguments, SourceModified, SourceAccessed, DestListVersion, LastUsedEntryNumber, EntryName,EntryNumber, CreationTime, LastModified, Hostname, MacAddress, Path, PinStatus, FileBirthDroid, FileDroid, VolumeBirthDroid, VolumeDroid, TargetCreated, TargetModified, TargetAccessed, FileSize, RelativePath, WorkingDirectory, FileAttributes, HeaderFlags, DriveType, DriveSerialNumber, DriveLabel, LocalPath, CommonPath, TargetIDAbsolutePath, TargetMFTEntryNumber, TargetMFTSequenceNumber, MachineID, MachineMACAddress, MACVendor, TrackerCreatedOn, ExtraBlocksPresent {
 		display: block;
 		width: auto;
 		color: #043F5F;
@@ -123,6 +123,21 @@ rgtColumn {
 			color: #A6A8A9;
 		}
 		*/
+
+	Arguments:before {
+		content: "Arguments:";
+		display: inline;
+		letter-spacing: 1pt;
+		line-height: 1;
+		word-spacing: 2pt;
+		font-weight: bold;
+		font-size: 12px;
+		font-family: verdana, sans-serif;
+		text-align: right;
+		text-decoration: underline;
+		padding: 2px 10px 0 2px;
+		margin: 2px 0 4px 0;
+	}
 	
 	TargetCreated:before {
 		content: "Target Created:";
@@ -288,6 +303,20 @@ rgtColumn {
 		
 	EntryNumber:before {
 		content: "Entry Number:";
+		display: inline;
+		letter-spacing: 1pt;
+		line-height: 1;
+		word-spacing: 2pt;
+		font-weight: bold;
+		font-size: 12px;
+		font-family: verdana, sans-serif;
+		text-align: right;
+		text-decoration: underline;
+		padding: 2px 10px 0 2px;
+		margin: 2px 0 4px 0;
+	}
+    EntryName:before {
+		content: "Entry Name:";
 		display: inline;
 		letter-spacing: 1pt;
 		line-height: 1;
@@ -556,6 +585,9 @@ rgtColumn {
 		margin: 2px 0 4px 0;
 	}
 
+	LocalPath {
+		color: maroon;	
+	}
 		LocalPath:before {
 			content: "Local Path:";
 			display: inline;
@@ -585,45 +617,13 @@ rgtColumn {
 		padding: 2px 10px 0 2px;
 		margin: 2px 0 4px 0;
 	}
-	
-		EntryName:before {
-		content: "Entry Name:";
-		display: inline;
-		letter-spacing: 1pt;
-		line-height: 1;
-		word-spacing: 2pt;
-		font-weight: bold;
-		font-size: 12px;
-		font-family: verdana, sans-serif;
-		text-align: right;
-		text-decoration: underline;
-		padding: 2px 10px 0 2px;
-		margin: 2px 0 4px 0;
-	}
-	
-	
-	
 
-TargetIDAbsolutePath {
+    TargetIDAbsolutePath {
 		color: maroon;	
 	}
+
 	TargetIDAbsolutePath:before {
 		content: "TargetID Absolute Path:";
-		display: inline;
-		letter-spacing: 1pt;
-		line-height: 1;
-		word-spacing: 2pt;
-		font-weight: bold;
-		font-size: 12px;
-		font-family: verdana, sans-serif;
-		text-align: right;
-		text-decoration: underline;
-		padding: 2px 10px 0 2px;
-		margin: 2px 0 4px 0;
-	}
-	
-	Arguments:before {
-		content: "Arguments:";
 		display: inline;
 		letter-spacing: 1pt;
 		line-height: 1;
