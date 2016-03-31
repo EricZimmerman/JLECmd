@@ -120,7 +120,7 @@ namespace JLECmd
 
             _fluentCommandLineParser.Setup(arg => arg.IncludeLnkDetail).As("ld")
                 .WithDescription(
-                    "When true, include more information about auto files (for full auto details, dump lnk files using --dumpTo and process with LECmd)")
+                    "When true, include more information about auto files (for full lnk details, dump lnk files using --dumpTo and process with LECmd)")
                 .SetDefault(false);
 
             _fluentCommandLineParser.Setup(arg => arg.LnkDumpDirectory).As("dumpTo")
@@ -729,7 +729,7 @@ namespace JLECmd
 
 
                         //       xml?.WriteElementString("EntryNumber", o.EntryNumber);
-                        xml?.WriteElementString("TargetIDAbsolutePath", o.TargetIDAbsolutePath);
+                        xml?.WriteElementString("TargetIDAbsolutePath", RemoveInvalidXmlChars(o.TargetIDAbsolutePath));
 
                         xml?.WriteElementString("CreationTime", o.CreationTime);
                         xml?.WriteElementString("LastModified", o.LastModified);
@@ -743,7 +743,7 @@ namespace JLECmd
                         xml?.WriteElementString("VolumeDroid", o.VolumeDroid);
 
 
-                        if (o.Arguments.Length > 0)
+                        if (o.Arguments?.Length > 0)
                         {
                             xml?.WriteElementString("Arguments", o.Arguments);
                         }
@@ -794,6 +794,11 @@ namespace JLECmd
             }
         }
 
+        static string RemoveInvalidXmlChars(string text)
+        {
+            var validXmlChars = text.Where(ch => XmlConvert.IsXmlChar(ch)).ToArray();
+            return new string(validXmlChars);
+        }
 
         private static bool IsAutomaticDestinationFile(string file)
         {
