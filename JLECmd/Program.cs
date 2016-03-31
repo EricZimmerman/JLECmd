@@ -796,6 +796,16 @@ namespace JLECmd
 
         static string RemoveInvalidXmlChars(string text)
         {
+            if (text == null)
+            {
+                return "";
+            }
+
+            if (text.Trim().Length == 0)
+            {
+                return text;
+            }
+
             var validXmlChars = text.Where(ch => XmlConvert.IsXmlChar(ch)).ToArray();
             return new string(validXmlChars);
         }
