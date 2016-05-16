@@ -61,6 +61,33 @@ namespace JLECmd.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 00-00-00	XEROX CORPORATION
+        ///00-00-01	XEROX CORPORATION
+        ///00-00-02	XEROX CORPORATION
+        ///00-00-03	XEROX CORPORATION
+        ///00-00-04	XEROX CORPORATION
+        ///00-00-05	XEROX CORPORATION
+        ///00-00-06	XEROX CORPORATION
+        ///00-00-07	XEROX CORPORATION
+        ///00-00-08	XEROX CORPORATION
+        ///00-00-09	XEROX CORPORATION
+        ///00-00-0A	OMRON TATEISI ELECTRONICS CO.
+        ///00-00-0B	MATRIX CORPORATION
+        ///00-00-0C	CISCO SYSTEMS, INC.
+        ///00-00-0D	FIBRONICS LTD.
+        ///00-00-0E	FUJITSU LIMITED
+        ///00-00-0F	NEXT, INC.
+        ///00-00-10	SYTEK INC.
+        ///00-00-11	NORMEREL SYSTEMES
+        ///00-00-12	INF [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string MACs {
+            get {
+                return ResourceManager.GetString("MACs", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to /*! normalize.css v3.0.3 | MIT License | github.com/necolas/normalize.css */
         ///
         ////**
@@ -93,28 +120,25 @@ namespace JLECmd.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to /* Report styling created by: Devon Ackerman
-        ///					  devon@aeiforensics.com
-        ///                    Last Updated: 2016.02.16 
+        ///   Looks up a localized string similar to /* Report styling written by: Devon Ackerman
+        /// Crafted for JLECmd (automatic &amp; custom JLs)
+        ///                      devon@aeiforensics.com
+        ///                    Last Updated: 2016.03.16
         ///-------------------------------------------- */
         ///
-        ///Wrapper_Forensicator {
-        ///	width: 1400px;
+        ////* If value is empty, then hide container. Comment out to show empty fields */
+        ///:empty {
+        ///	display:none !important;
+        ///}
+        ///
+        ///Container {
+        ///	width: 1200px;
         ///	height: auto;
         ///	border: medium #146B99 solid;
         ///	resize: both;
         ///	overflow: auto;
         ///	min-width: 50px;  /* min-width  */
-        ///	min-height: 50px; /* min-height */
-        ///	display: block;
-        ///	padding: 0;
-        ///	margin: 10px;
-        ///	background-color: #D9ECFF;
-        ///}
-        ///
-        ///	Forensicator {
-        ///		letter-spacing: 1pt;
-        ///		line-height: 1; [rest of string was truncated]&quot;;.
+        ///	min-h [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string style {
             get {
