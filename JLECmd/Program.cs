@@ -1267,7 +1267,7 @@ namespace JLECmd
                     {
                         _logger.Info($"Entry #: {autoDestList.EntryNumber}");
                         _logger.Info($"  Path: {autoDestList.Path}");
-                        _logger.Info($"Pinned: {autoDestList.Pinned}");
+                        _logger.Info($"  Pinned: {autoDestList.Pinned}");
                         _logger.Info(
                             $"  Created on: {autoDestList.CreatedOn.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
                         _logger.Info(
