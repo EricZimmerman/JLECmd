@@ -1276,7 +1276,11 @@ namespace JLECmd
                         _logger.Info(
                             $"  Mac Address: {(autoDestList.MacAddress == "00:00:00:00:00:00" ? string.Empty : autoDestList.MacAddress)}");
 
-                        var tc = autoDestList.Lnk.Header.TargetCreationDate.Year == 1601
+                        _logger.Error("\r\n--- Lnk information ---\r\n");
+
+                        if (!_fluentCommandLineParser.Object.IncludeLnkFullDetail)
+                        {
+                                 var tc = autoDestList.Lnk.Header.TargetCreationDate.Year == 1601
                             ? ""
                             : autoDestList.Lnk.Header.TargetCreationDate.ToString(
                                 _fluentCommandLineParser.Object.DateTimeFormat);
@@ -1289,10 +1293,13 @@ namespace JLECmd
                             : autoDestList.Lnk.Header.TargetLastAccessedDate.ToString(
                                 _fluentCommandLineParser.Object.DateTimeFormat);
 
-                        _logger.Warn("--- Lnk information ---");
+                       
                         _logger.Info($"  Lnk target created: {tc}");
                         _logger.Info($"  Lnk target modified: {tm}");
-                        _logger.Info($"  Lnk target accessed: {ta}");
+                        _logger.Info($"  Lnk target accessed: {ta}");  
+                        }
+
+                 
 
 
                         if (_fluentCommandLineParser.Object.IncludeLnkFullDetail)
