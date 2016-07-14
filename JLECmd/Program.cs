@@ -1905,7 +1905,7 @@ namespace JLECmd
                                             _logger.Info($"   File Droid birth: {tdb.FileDroidBirth}");
                                             _logger.Info("");
                                             break;
-                                        case "VistaAndAboveIDListDataBlock":
+                                        case "VistaAndAboveIdListDataBlock":
                                             var vdb = extraDataBase as VistaAndAboveIdListDataBlock;
                                             _logger.Warn(">> Vista and above ID List data block");
 
