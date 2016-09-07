@@ -57,7 +57,7 @@ namespace JLECmd
 
         private static void LoadMACs()
         {
-            var lines = Resources.MACs.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+            var lines = Resources.MACs.Split(new[] {Environment.NewLine}, StringSplitOptions.None);
 
             foreach (var line in lines)
             {
@@ -66,9 +66,7 @@ namespace JLECmd
                 var val = segs[1].Trim();
 
                 if (_macList.ContainsKey(key) == false)
-                {
                     _macList.Add(key, val);
-                }
             }
         }
 
@@ -108,7 +106,6 @@ namespace JLECmd
                     "Process all files in directory vs. only files matching *.automaticDestinations-ms or *.customDestinations-ms\r\n")
                 .SetDefault(false);
 
-      
 
             _fluentCommandLineParser.Setup(arg => arg.CsvDirectory)
                 .As("csv")
@@ -142,9 +139,9 @@ namespace JLECmd
                 .SetDefault(false);
 
             _fluentCommandLineParser.Setup(arg => arg.IncludeLnkFullDetail).As("fd")
-             .WithDescription(
-                 "Include full information about lnk files (Alternatively, dump lnk files using --dumpTo and process with LECmd)")
-             .SetDefault(false);
+                .WithDescription(
+                    "Include full information about lnk files (Alternatively, dump lnk files using --dumpTo and process with LECmd)")
+                .SetDefault(false);
 
             _fluentCommandLineParser.Setup(arg => arg.LnkDumpDirectory).As("dumpTo")
                 .WithDescription(
@@ -190,9 +187,7 @@ namespace JLECmd
             var result = _fluentCommandLineParser.Parse(args);
 
             if (result.HelpCalled)
-            {
                 return;
-            }
 
             if (result.HasErrors)
             {
@@ -213,14 +208,14 @@ namespace JLECmd
                 return;
             }
 
-            if (UsefulExtension.IsNullOrEmpty(_fluentCommandLineParser.Object.File) == false &&
+            if ((UsefulExtension.IsNullOrEmpty(_fluentCommandLineParser.Object.File) == false) &&
                 !File.Exists(_fluentCommandLineParser.Object.File))
             {
                 _logger.Warn($"File '{_fluentCommandLineParser.Object.File}' not found. Exiting");
                 return;
             }
 
-            if (UsefulExtension.IsNullOrEmpty(_fluentCommandLineParser.Object.Directory) == false &&
+            if ((UsefulExtension.IsNullOrEmpty(_fluentCommandLineParser.Object.Directory) == false) &&
                 !Directory.Exists(_fluentCommandLineParser.Object.Directory))
             {
                 _logger.Warn($"Directory '{_fluentCommandLineParser.Object.Directory}' not found. Exiting");
@@ -232,9 +227,7 @@ namespace JLECmd
             _logger.Info($"Command line: {string.Join(" ", Environment.GetCommandLineArgs().Skip(1))}\r\n");
 
             if (_fluentCommandLineParser.Object.PreciseTimestamps)
-            {
                 _fluentCommandLineParser.Object.DateTimeFormat = _preciseTimeFormat;
-            }
 
             _processedAutoFiles = new List<AutomaticDestination>();
             _processedCustomFiles = new List<CustomDestination>();
@@ -244,15 +237,12 @@ namespace JLECmd
             if (_fluentCommandLineParser.Object.File?.Length > 0)
             {
                 if (IsAutomaticDestinationFile(_fluentCommandLineParser.Object.File))
-                {
                     try
                     {
                         AutomaticDestination adjl = null;
                         adjl = ProcessAutoFile(_fluentCommandLineParser.Object.File);
                         if (adjl != null)
-                        {
                             _processedAutoFiles.Add(adjl);
-                        }
                     }
                     catch (UnauthorizedAccessException ua)
                     {
@@ -266,17 +256,13 @@ namespace JLECmd
                             $"Error getting jump lists. Error: {ex.Message}");
                         return;
                     }
-                }
                 else
-                {
                     try
                     {
                         CustomDestination cdjl = null;
                         cdjl = ProcessCustomFile(_fluentCommandLineParser.Object.File);
                         if (cdjl != null)
-                        {
                             _processedCustomFiles.Add(cdjl);
-                        }
                     }
                     catch (UnauthorizedAccessException ua)
                     {
@@ -290,7 +276,6 @@ namespace JLECmd
                             $"Error getting jump lists. Error: {ex.Message}");
                         return;
                     }
-                }
             }
             else
             {
@@ -304,9 +289,7 @@ namespace JLECmd
                 {
                     var mask = "*.*Destinations-ms";
                     if (_fluentCommandLineParser.Object.AllFiles)
-                    {
                         mask = "*";
-                    }
 
                     jumpFiles.AddRange(Directory.GetFiles(_fluentCommandLineParser.Object.Directory, mask,
                         SearchOption.AllDirectories));
@@ -331,33 +314,25 @@ namespace JLECmd
                 sw.Start();
 
                 foreach (var file in jumpFiles)
-                {
                     if (IsAutomaticDestinationFile(file))
                     {
                         AutomaticDestination adjl = null;
                         adjl = ProcessAutoFile(file);
                         if (adjl != null)
-                        {
                             _processedAutoFiles.Add(adjl);
-                        }
                     }
                     else
                     {
                         CustomDestination cdjl = null;
                         cdjl = ProcessCustomFile(file);
                         if (cdjl != null)
-                        {
                             _processedCustomFiles.Add(cdjl);
-                        }
                     }
-                }
 
                 sw.Stop();
 
                 if (_fluentCommandLineParser.Object.Quiet)
-                {
                     _logger.Info("");
-                }
 
                 _logger.Info(
                     $"Processed {jumpFiles.Count - _failedFiles.Count:N0} out of {jumpFiles.Count:N0} files in {sw.Elapsed.TotalSeconds:N4} seconds");
@@ -366,9 +341,7 @@ namespace JLECmd
                     _logger.Info("");
                     _logger.Warn("Failed files");
                     foreach (var failedFile in _failedFiles)
-                    {
                         _logger.Info($"  {failedFile}");
-                    }
                 }
             }
 
@@ -380,58 +353,45 @@ namespace JLECmd
                     $"Dumping lnk files to '{_fluentCommandLineParser.Object.LnkDumpDirectory}'");
 
                 if (Directory.Exists(_fluentCommandLineParser.Object.LnkDumpDirectory) == false)
-                {
                     Directory.CreateDirectory(_fluentCommandLineParser.Object.LnkDumpDirectory);
-                }
 
                 foreach (var processedCustomFile in _processedCustomFiles)
-                {
                     foreach (var entry in processedCustomFile.Entries)
                     {
                         if (entry.LnkFiles.Count == 0)
-                        {
                             continue;
-                        }
 
                         var outDir = Path.Combine(_fluentCommandLineParser.Object.LnkDumpDirectory,
                             Path.GetFileName(processedCustomFile.SourceFile));
 
                         if (Directory.Exists(outDir) == false)
-                        {
                             Directory.CreateDirectory(outDir);
-                        }
 
                         entry.DumpAllLnkFiles(outDir, processedCustomFile.AppId.AppId);
                     }
-                }
 
                 foreach (var automaticDestination in _processedAutoFiles)
                 {
-                    if (automaticDestination.DestListCount == 0)
-                    {
+                    if ((automaticDestination.DestListCount == 0) &&
+                        (_fluentCommandLineParser.Object.WithDirectory == false))
                         continue;
-                    }
                     var outDir = Path.Combine(_fluentCommandLineParser.Object.LnkDumpDirectory,
                         Path.GetFileName(automaticDestination.SourceFile));
 
                     if (Directory.Exists(outDir) == false)
-                    {
                         Directory.CreateDirectory(outDir);
-                    }
 
                     automaticDestination.DumpAllLnkFiles(outDir);
                 }
+
             }
 
             if (_processedAutoFiles.Count > 0)
-            {
-                ExportAuto();
-            }
+                    ExportAuto();
 
-            if (_processedCustomFiles.Count > 0)
-            {
-                ExportCustom();
-            }
+                if (_processedCustomFiles.Count > 0)
+                    ExportCustom();
+            
         }
 
         private static void ExportCustom()
@@ -467,9 +427,7 @@ namespace JLECmd
                 }
 
                 if (_fluentCommandLineParser.Object.JsonDirectory?.Length > 0)
-                {
                     _logger.Warn($"Saving Custom json output to '{_fluentCommandLineParser.Object.JsonDirectory}'");
-                }
 
 
                 XmlTextWriter xml = null;
@@ -480,15 +438,11 @@ namespace JLECmd
                         $"{DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss")}_JLECmd_Custom_Output_for_{_fluentCommandLineParser.Object.xHtmlDirectory.Replace(@":\", "_").Replace(@"\", "_")}");
 
                     if (Directory.Exists(outDir) == false)
-                    {
                         Directory.CreateDirectory(outDir);
-                    }
 
                     var styleDir = Path.Combine(outDir, "styles");
                     if (Directory.Exists(styleDir) == false)
-                    {
                         Directory.CreateDirectory(styleDir);
-                    }
 
                     File.WriteAllText(Path.Combine(styleDir, "normalize.css"), Resources.normalize);
                     File.WriteAllText(Path.Combine(styleDir, "style.css"), Resources.style);
@@ -514,10 +468,8 @@ namespace JLECmd
                 foreach (var processedFile in _processedCustomFiles)
                 {
                     if (_fluentCommandLineParser.Object.JsonDirectory?.Length > 0)
-                    {
                         SaveJsonCustom(processedFile, _fluentCommandLineParser.Object.JsonPretty,
                             _fluentCommandLineParser.Object.JsonDirectory);
-                    }
 
                     var records = GetCustomCsvFormat(processedFile);
 
@@ -571,9 +523,7 @@ namespace JLECmd
 
                         xml?.WriteElementString("TargetIDAbsolutePath", o.TargetIDAbsolutePath);
                         if (o.Arguments.Length > 0)
-                        {
                             xml?.WriteElementString("Arguments", o.Arguments);
-                        }
 
 
                         xml?.WriteElementString("TargetCreated", o.TargetCreated);
@@ -657,9 +607,7 @@ namespace JLECmd
                 }
 
                 if (_fluentCommandLineParser.Object.JsonDirectory?.Length > 0)
-                {
                     _logger.Warn($"Saving Automatic json output to '{_fluentCommandLineParser.Object.JsonDirectory}'");
-                }
 
 
                 XmlTextWriter xml = null;
@@ -670,15 +618,11 @@ namespace JLECmd
                         $"{DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss")}_JLECmd_Automatic_Output_for_{_fluentCommandLineParser.Object.xHtmlDirectory.Replace(@":\", "_").Replace(@"\", "_")}");
 
                     if (Directory.Exists(outDir) == false)
-                    {
                         Directory.CreateDirectory(outDir);
-                    }
 
                     var stylesDir = Path.Combine(outDir, "styles");
                     if (Directory.Exists(stylesDir) == false)
-                    {
                         Directory.CreateDirectory(stylesDir);
-                    }
 
                     File.WriteAllText(Path.Combine(stylesDir, "normalize.css"), Resources.normalize);
                     File.WriteAllText(Path.Combine(stylesDir, "style.css"), Resources.style);
@@ -704,10 +648,8 @@ namespace JLECmd
                 foreach (var processedFile in _processedAutoFiles)
                 {
                     if (_fluentCommandLineParser.Object.JsonDirectory?.Length > 0)
-                    {
                         SaveJsonAuto(processedFile, _fluentCommandLineParser.Object.JsonPretty,
                             _fluentCommandLineParser.Object.JsonDirectory);
-                    }
 
                     var records = GetAutoCsvFormat(processedFile);
 
@@ -726,21 +668,22 @@ namespace JLECmd
                     var mt = DateTimeOffset.FromFileTime(fs.LastWriteTime.ToFileTime()).ToUniversalTime();
                     var at = DateTimeOffset.FromFileTime(fs.LastAccessTime.ToFileTime()).ToUniversalTime();
 
-                   
+
                     if (xml != null)
                     {
-                         xml?.WriteStartElement("Container");
-                    xml?.WriteElementString("SourceFile", processedFile.SourceFile);
-                    xml?.WriteElementString("SourceCreated", ct.ToString(_fluentCommandLineParser.Object.DateTimeFormat));
-                    xml?.WriteElementString("SourceModified",
-                        mt.ToString(_fluentCommandLineParser.Object.DateTimeFormat));
-                    xml?.WriteElementString("SourceAccessed",
-                        at.ToString(_fluentCommandLineParser.Object.DateTimeFormat));
+                        xml?.WriteStartElement("Container");
+                        xml?.WriteElementString("SourceFile", processedFile.SourceFile);
+                        xml?.WriteElementString("SourceCreated",
+                            ct.ToString(_fluentCommandLineParser.Object.DateTimeFormat));
+                        xml?.WriteElementString("SourceModified",
+                            mt.ToString(_fluentCommandLineParser.Object.DateTimeFormat));
+                        xml?.WriteElementString("SourceAccessed",
+                            at.ToString(_fluentCommandLineParser.Object.DateTimeFormat));
 
-                    xml?.WriteElementString("AppId", processedFile.AppId.AppId);
-                    xml?.WriteElementString("AppIdDescription", processedFile.AppId.Description);
-                    xml?.WriteElementString("DestListVersion", processedFile.DestListVersion.ToString());
-                    xml?.WriteElementString("LastUsedEntryNumber", processedFile.LastUsedEntryNumber.ToString());
+                        xml?.WriteElementString("AppId", processedFile.AppId.AppId);
+                        xml?.WriteElementString("AppIdDescription", processedFile.AppId.Description);
+                        xml?.WriteElementString("DestListVersion", processedFile.DestListVersion.ToString());
+                        xml?.WriteElementString("LastUsedEntryNumber", processedFile.LastUsedEntryNumber.ToString());
 
                         foreach (var o in records)
                         {
@@ -760,7 +703,8 @@ namespace JLECmd
 
 
                             //       xml?.WriteElementString("EntryNumber", o.EntryNumber);
-                            xml?.WriteElementString("TargetIDAbsolutePath", RemoveInvalidXmlChars(o.TargetIDAbsolutePath));
+                            xml?.WriteElementString("TargetIDAbsolutePath",
+                                RemoveInvalidXmlChars(o.TargetIDAbsolutePath));
 
                             xml?.WriteElementString("CreationTime", o.CreationTime);
                             xml?.WriteElementString("LastModified", o.LastModified);
@@ -775,9 +719,7 @@ namespace JLECmd
 
 
                             if (o.Arguments?.Length > 0)
-                            {
                                 xml?.WriteElementString("Arguments", o.Arguments);
-                            }
 
                             xml?.WriteElementString("TargetCreated", o.TargetCreated);
                             xml?.WriteElementString("TargetModified", o.TargetModified);
@@ -808,8 +750,6 @@ namespace JLECmd
 
                         xml?.WriteEndElement();
                     }
-
-                   
                 }
 
                 //Close CSV stuff
@@ -828,17 +768,13 @@ namespace JLECmd
             }
         }
 
-        static string RemoveInvalidXmlChars(string text)
+        private static string RemoveInvalidXmlChars(string text)
         {
             if (text == null)
-            {
                 return "";
-            }
 
             if (text.Trim().Length == 0)
-            {
                 return text;
-            }
 
             var validXmlChars = text.Where(ch => XmlConvert.IsXmlChar(ch)).ToArray();
             return new string(validXmlChars);
@@ -871,7 +807,6 @@ namespace JLECmd
             var at = DateTimeOffset.FromFileTime(fs.LastAccessTime.ToFileTime()).ToUniversalTime();
 
             foreach (var entry in cust.Entries)
-            {
                 foreach (var lnk in entry.LnkFiles)
                 {
                     var csOut = new CustomCsvOut
@@ -912,14 +847,10 @@ namespace JLECmd
                     csOut.Arguments = string.Empty;
                     if ((lnk.Header.DataFlags & Header.DataFlag.HasArguments) ==
                         Header.DataFlag.HasArguments)
-                    {
                         csOut.Arguments = lnk.Arguments ?? string.Empty;
-                    }
 
                     if (lnk.TargetIDs?.Count > 0)
-                    {
                         csOut.TargetIDAbsolutePath = GetAbsolutePathFromTargetIDs(lnk.TargetIDs);
-                    }
 
                     csOut.WorkingDirectory = lnk.WorkingDirectory;
 
@@ -930,9 +861,7 @@ namespace JLECmd
                         var names = new List<string>();
 
                         foreach (var extraDataBase in lnk.ExtraBlocks)
-                        {
                             names.Add(extraDataBase.GetType().Name);
-                        }
 
                         ebPresent = string.Join(", ", names);
                     }
@@ -963,23 +892,18 @@ namespace JLECmd
                             {
                                 var eb4 = eb as Beef0004;
                                 if (eb4.MFTInformation.MFTEntryNumber != null)
-                                {
                                     csOut.TargetMFTEntryNumber =
                                         $"0x{eb4.MFTInformation.MFTEntryNumber.Value.ToString("X")}";
-                                }
 
                                 if (eb4.MFTInformation.MFTSequenceNumber != null)
-                                {
                                     csOut.TargetMFTSequenceNumber =
                                         $"0x{eb4.MFTInformation.MFTSequenceNumber.Value.ToString("X")}";
-                                }
                             }
                         }
                     }
 
                     csList.Add(csOut);
                 }
-            }
 
             return csList;
         }
@@ -1059,7 +983,7 @@ namespace JLECmd
                     HeaderFlags = destListEntry.Lnk?.Header.DataFlags.ToString(),
                     LocalPath = destListEntry.Lnk?.LocalPath,
                     RelativePath = destListEntry.Lnk?.RelativePath,
-                    Notes= String.Empty
+                    Notes = string.Empty
                 };
 
 
@@ -1071,23 +995,19 @@ namespace JLECmd
 
                 var target = GetAbsolutePathFromTargetIDs(destListEntry.Lnk.TargetIDs);
                 if (target.Length == 0)
-                {
                     target = $"{destListEntry.Lnk.NetworkShareInfo.NetworkShareName}\\\\{destListEntry.Lnk.CommonPath}";
-                }
 
                 csOut.TargetIDAbsolutePath = target;
 
-              /*  if (destListEntry.Lnk.TargetIDs?.Count > 0)
-                {
-                    csOut.TargetIDAbsolutePath = GetAbsolutePathFromTargetIDs(destListEntry.Lnk.TargetIDs);
-                }*/
+                /*  if (destListEntry.Lnk.TargetIDs?.Count > 0)
+                  {
+                      csOut.TargetIDAbsolutePath = GetAbsolutePathFromTargetIDs(destListEntry.Lnk.TargetIDs);
+                  }*/
 
                 csOut.Arguments = string.Empty;
                 if ((destListEntry.Lnk.Header.DataFlags & Header.DataFlag.HasArguments) ==
                     Header.DataFlag.HasArguments)
-                {
                     csOut.Arguments = destListEntry.Lnk.Arguments ?? string.Empty;
-                }
 
                 csOut.WorkingDirectory = destListEntry.Lnk.WorkingDirectory;
 
@@ -1098,9 +1018,7 @@ namespace JLECmd
                     var names = new List<string>();
 
                     foreach (var extraDataBase in destListEntry.Lnk.ExtraBlocks)
-                    {
                         names.Add(extraDataBase.GetType().Name);
-                    }
 
                     ebPresent = string.Join(", ", names);
                 }
@@ -1133,16 +1051,12 @@ namespace JLECmd
                         {
                             var eb4 = eb as Beef0004;
                             if (eb4.MFTInformation.MFTEntryNumber != null)
-                            {
                                 csOut.TargetMFTEntryNumber =
                                     $"0x{eb4.MFTInformation.MFTEntryNumber.Value.ToString("X")}";
-                            }
 
                             if (eb4.MFTInformation.MFTSequenceNumber != null)
-                            {
                                 csOut.TargetMFTSequenceNumber =
                                     $"0x{eb4.MFTInformation.MFTSequenceNumber.Value.ToString("X")}";
-                            }
                         }
                     }
                 }
@@ -1151,20 +1065,15 @@ namespace JLECmd
             }
 
             if (_fluentCommandLineParser.Object.WithDirectory)
-            {
                 foreach (var directoryEntry in auto.Directory)
                 {
                     if (directoryEntry.DirectoryName.Equals("Root Entry") ||
-                                directoryEntry.DirectoryName.Equals("DestList"))
-                    {
+                        directoryEntry.DirectoryName.Equals("DestList"))
                         continue;
-                    }
 
                     if (auto.DestListEntries.Any(
-                            t => t.EntryNumber.ToString("X") == directoryEntry.DirectoryName) != false)
-                    {
+                        t => t.EntryNumber.ToString("X") == directoryEntry.DirectoryName))
                         continue;
-                    }
 
                     //this directory entry is not in destlist
 
@@ -1184,41 +1093,42 @@ namespace JLECmd
                             LastUsedEntryNumber = auto.LastUsedEntryNumber.ToString(),
                             EntryNumber = directoryEntry.DirectoryName,
                             CreationTime =
-                        directoryEntry.CreationTime?.Year == 1582
-                            ? string.Empty
-                            : directoryEntry.CreationTime?.ToString(_fluentCommandLineParser.Object.DateTimeFormat),
-                            LastModified = directoryEntry.ModifiedTime?.ToString(_fluentCommandLineParser.Object.DateTimeFormat),
+                                directoryEntry.CreationTime?.Year == 1582
+                                    ? string.Empty
+                                    : directoryEntry.CreationTime?.ToString(
+                                        _fluentCommandLineParser.Object.DateTimeFormat),
+                            LastModified =
+                                directoryEntry.ModifiedTime?.ToString(_fluentCommandLineParser.Object.DateTimeFormat),
                             Hostname = string.Empty,
                             MacAddress = string.Empty,
-                        
                             Path = string.Empty,
                             PinStatus = string.Empty,
                             FileBirthDroid = string.Empty,
                             FileDroid =
-                        string.Empty,
+                                string.Empty,
                             VolumeBirthDroid = string.Empty,
                             VolumeDroid = string.Empty,
                             TargetCreated = f?.Header.TargetCreationDate.Year == 1601
-                            ? string.Empty
-                            : f?.Header.TargetCreationDate.ToString(
-                                _fluentCommandLineParser.Object.DateTimeFormat),
+                                ? string.Empty
+                                : f?.Header.TargetCreationDate.ToString(
+                                    _fluentCommandLineParser.Object.DateTimeFormat),
                             TargetModified =
-                        f?.Header.TargetModificationDate.Year == 1601
-                            ? string.Empty
-                            : f?.Header.TargetModificationDate.ToString(
-                                _fluentCommandLineParser.Object.DateTimeFormat),
+                                f?.Header.TargetModificationDate.Year == 1601
+                                    ? string.Empty
+                                    : f?.Header.TargetModificationDate.ToString(
+                                        _fluentCommandLineParser.Object.DateTimeFormat),
                             TargetAccessed =
-                        f?.Header.TargetLastAccessedDate.Year == 1601
-                            ? string.Empty
-                            : f?.Header.TargetLastAccessedDate.ToString(
-                                _fluentCommandLineParser.Object.DateTimeFormat),
+                                f?.Header.TargetLastAccessedDate.Year == 1601
+                                    ? string.Empty
+                                    : f?.Header.TargetLastAccessedDate.ToString(
+                                        _fluentCommandLineParser.Object.DateTimeFormat),
                             CommonPath = f?.CommonPath,
                             DriveLabel = f?.VolumeInfo?.VolumeLabel,
                             DriveSerialNumber = f?.VolumeInfo?.DriveSerialNumber,
                             DriveType =
-                        f?.VolumeInfo == null
-                            ? "(None)"
-                            : GetDescriptionFromEnumValue(f?.VolumeInfo.DriveType),
+                                f?.VolumeInfo == null
+                                    ? "(None)"
+                                    : GetDescriptionFromEnumValue(f?.VolumeInfo.DriveType),
                             FileAttributes = f?.Header.FileAttributes.ToString(),
                             FileSize = f?.Header.FileSize ?? 0,
                             HeaderFlags = f?.Header.DataFlags.ToString(),
@@ -1228,23 +1138,19 @@ namespace JLECmd
                         };
 
 
-                      /*  if (f.TargetIDs?.Count > 0)
+                        /*  if (f.TargetIDs?.Count > 0)
                         {*/
-                            var target = GetAbsolutePathFromTargetIDs(f.TargetIDs);
-                            if (target.Length == 0)
-                            {
-                                target = $"{f.NetworkShareInfo.NetworkShareName}\\\\{f.CommonPath}";
-                            }
+                        var target = GetAbsolutePathFromTargetIDs(f.TargetIDs);
+                        if (target.Length == 0)
+                            target = $"{f.NetworkShareInfo.NetworkShareName}\\\\{f.CommonPath}";
 
-                            csOut.TargetIDAbsolutePath = target;
+                        csOut.TargetIDAbsolutePath = target;
                         //}
 
                         csOut.Arguments = string.Empty;
                         if ((f.Header.DataFlags & Header.DataFlag.HasArguments) ==
                             Header.DataFlag.HasArguments)
-                        {
                             csOut.Arguments = f.Arguments ?? string.Empty;
-                        }
 
                         csOut.WorkingDirectory = f.WorkingDirectory;
 
@@ -1255,9 +1161,7 @@ namespace JLECmd
                             var names = new List<string>();
 
                             foreach (var extraDataBase in f.ExtraBlocks)
-                            {
                                 names.Add(extraDataBase.GetType().Name);
-                            }
 
                             ebPresent = string.Join(", ", names);
                         }
@@ -1290,16 +1194,12 @@ namespace JLECmd
                                 {
                                     var eb4 = eb as Beef0004;
                                     if (eb4.MFTInformation.MFTEntryNumber != null)
-                                    {
                                         csOut.TargetMFTEntryNumber =
                                             $"0x{eb4.MFTInformation.MFTEntryNumber.Value.ToString("X")}";
-                                    }
 
                                     if (eb4.MFTInformation.MFTSequenceNumber != null)
-                                    {
                                         csOut.TargetMFTSequenceNumber =
                                             $"0x{eb4.MFTInformation.MFTSequenceNumber.Value.ToString("X")}";
-                                    }
                                 }
                             }
                         }
@@ -1308,9 +1208,6 @@ namespace JLECmd
                     }
                 }
 
-                
-            }
-
 
             return csList;
         }
@@ -1318,25 +1215,17 @@ namespace JLECmd
         private static void DumpToJsonAuto(AutomaticDestination auto, bool pretty, string outFile)
         {
             if (pretty)
-            {
                 File.WriteAllText(outFile, auto.Dump());
-            }
             else
-            {
                 File.WriteAllText(outFile, auto.ToJson());
-            }
         }
 
         private static void DumpToJsonCustom(CustomDestination cust, bool pretty, string outFile)
         {
             if (pretty)
-            {
                 File.WriteAllText(outFile, cust.Dump());
-            }
             else
-            {
                 File.WriteAllText(outFile, cust.ToJson());
-            }
         }
 
         private static void SaveJsonCustom(CustomDestination cust, bool pretty, string outDir)
@@ -1344,9 +1233,7 @@ namespace JLECmd
             try
             {
                 if (Directory.Exists(outDir) == false)
-                {
                     Directory.CreateDirectory(outDir);
-                }
 
                 var outName =
                     $"{DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss")}_{Path.GetFileName(cust.SourceFile)}.json";
@@ -1365,9 +1252,7 @@ namespace JLECmd
             try
             {
                 if (Directory.Exists(outDir) == false)
-                {
                     Directory.CreateDirectory(outDir);
-                }
 
                 var outName =
                     $"{DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss")}_{Path.GetFileName(auto.SourceFile)}.json";
@@ -1395,14 +1280,10 @@ namespace JLECmd
             var absPath = string.Empty;
 
             if (ids.Count == 0)
-            {
                 return absPath;
-            }
 
             foreach (var shellBag in ids)
-            {
                 absPath += shellBag.Value + @"\";
-            }
 
             absPath = absPath.Substring(0, absPath.Length - 1);
 
@@ -1437,13 +1318,14 @@ namespace JLECmd
 
                     _logger.Warn("--- DestList information ---");
                     _logger.Info($"  Expected DestList entries:  {autoDest.DestListCount:N0}");
-                    _logger.Info($"  Actual DestList entries: {autoDest.DestListCount.ToString("N0")}");
+                    _logger.Info($"  Actual DestList entries: {autoDest.DestListCount:N0}");
                     _logger.Info($"  DestList version: {autoDest.DestListVersion}");
 
                     if (autoDest.DestListCount != autoDest.Directory.Count - 2)
                     {
                         _logger.Info("");
-                        _logger.Fatal($"  There are more items in the Directory ({autoDest.Directory.Count:N0}) than are contained in the DestList ({autoDest.DestListCount:N0}). Use --WithDirectory to view/export them");
+                        _logger.Fatal(
+                            $"  There are more items in the Directory ({autoDest.Directory.Count - 2:N0}) than are contained in the DestList ({autoDest.DestListCount:N0}). Use --WithDir to view/export them");
                     }
 
                     _logger.Info("");
@@ -1463,13 +1345,13 @@ namespace JLECmd
                             $"  Mac Address: {(autoDestList.MacAddress == "00:00:00:00:00:00" ? string.Empty : autoDestList.MacAddress)}");
 
                         _logger.Error("\r\n--- Lnk information ---\r\n");
-                        
+
                         if (_fluentCommandLineParser.Object.IncludeLnkFullDetail)
                         {
                             var tc = autoDestList.Lnk.Header.TargetCreationDate.Year == 1601
-                              ? ""
-                              : autoDestList.Lnk.Header.TargetCreationDate.ToString(
-                                  _fluentCommandLineParser.Object.DateTimeFormat);
+                                ? ""
+                                : autoDestList.Lnk.Header.TargetCreationDate.ToString(
+                                    _fluentCommandLineParser.Object.DateTimeFormat);
                             var tm = autoDestList.Lnk.Header.TargetModificationDate.Year == 1601
                                 ? ""
                                 : autoDestList.Lnk.Header.TargetModificationDate.ToString(
@@ -1494,15 +1376,14 @@ namespace JLECmd
                         }
 
 
-                            if (!_fluentCommandLineParser.Object.IncludeLnkFullDetail && autoDestList.Lnk.TargetIDs.Count > 0)
+                        if (!_fluentCommandLineParser.Object.IncludeLnkFullDetail &&
+                            (autoDestList.Lnk.TargetIDs.Count > 0))
                         {
-
                             var target = GetAbsolutePathFromTargetIDs(autoDestList.Lnk.TargetIDs);
 
                             if (target.Length == 0)
-                            {
-                                target = $"{autoDestList.Lnk.NetworkShareInfo.NetworkShareName}\\\\{autoDestList.Lnk.CommonPath}";
-                            }
+                                target =
+                                    $"{autoDestList.Lnk.NetworkShareInfo.NetworkShareName}\\\\{autoDestList.Lnk.CommonPath}";
 
                             _logger.Info($"  Absolute path: {target}");
                             _logger.Info("");
@@ -1514,31 +1395,23 @@ namespace JLECmd
                     if (_fluentCommandLineParser.Object.WithDirectory)
                     {
                         if (!_fluentCommandLineParser.Object.Quiet)
-                        {
                             _logger.Fatal("Directory entries not represented by DestList entries");
-                        }
-                        
+
 
                         foreach (var directoryEntry in autoDest.Directory)
                         {
                             if (directoryEntry.DirectoryName.Equals("Root Entry") ||
                                 directoryEntry.DirectoryName.Equals("DestList"))
-                            {
                                 continue;
-                            }
 
                             if (autoDest.DestListEntries.Any(
-                                    t => t.EntryNumber.ToString("X") == directoryEntry.DirectoryName) != false)
-                            {
+                                t => t.EntryNumber.ToString("X") == directoryEntry.DirectoryName))
                                 continue;
-                            }
 
                             //this directory entry is not in destlist
                             if (!_fluentCommandLineParser.Object.Quiet)
-                            {
                                 _logger.Info($"Directory Name: {directoryEntry.DirectoryName}");
-                            }
-                            
+
 
                             var f = autoDest.GetLnkFromDirectoryName(directoryEntry.DirectoryName);
 
@@ -1547,9 +1420,9 @@ namespace JLECmd
                                 if (_fluentCommandLineParser.Object.IncludeLnkFullDetail)
                                 {
                                     var tc = f.Header.TargetCreationDate.Year == 1601
-                            ? ""
-                            : f.Header.TargetCreationDate.ToString(
-                                _fluentCommandLineParser.Object.DateTimeFormat);
+                                        ? ""
+                                        : f.Header.TargetCreationDate.ToString(
+                                            _fluentCommandLineParser.Object.DateTimeFormat);
                                     var tm = f.Header.TargetModificationDate.Year == 1601
                                         ? ""
                                         : f.Header.TargetModificationDate.ToString(
@@ -1565,10 +1438,9 @@ namespace JLECmd
                                     _logger.Info($"  Lnk target accessed: {ta}");
                                     _logger.Info("");
 
-
                                     DumpLnkFile(f);
                                 }
-                               else if (_fluentCommandLineParser.Object.IncludeLnkDetail)
+                                else if (_fluentCommandLineParser.Object.IncludeLnkDetail)
                                 {
                                     DumpLnkDetail(f);
                                 }
@@ -1580,46 +1452,30 @@ namespace JLECmd
                                     var target = GetAbsolutePathFromTargetIDs(f.TargetIDs);
 
                                     if (target.Length == 0)
-                                    {
                                         target = $"{f.NetworkShareInfo.NetworkShareName}\\\\{f.CommonPath}";
-                                    }
 
                                     _logger.Info($"  Absolute path: {target}");
                                     _logger.Info("");
                                 }
-
-
-                                /*var target = GetAbsolutePathFromTargetIDs(f.TargetIDs);
-
-                                if (target.Length == 0)
-                                {
-                                    target = $"{f.NetworkShareInfo.NetworkShareName}\\\\{f.CommonPath}";
-                                }
-
-
-
-                                _logger.Info($"  Absolute path: {target}");*/
-
                             }
                             else
                             {
-                                _logger.Debug($"  No lnk file found for directory entry '{directoryEntry.DirectoryName}'");   
+                                _logger.Debug(
+                                    $"  No lnk file found for directory entry '{directoryEntry.DirectoryName}'");
                             }
                         }
                     }
-
                 }
 
                 sw.Stop();
 
                 if (_fluentCommandLineParser.Object.Quiet == false)
-                {
                     _logger.Info("");
-                }
 
                 if (autoDest.DestListCount != autoDest.Directory.Count - 2)
                 {
-                    _logger.Fatal($"** There are more items in the Directory ({autoDest.Directory.Count:N0}) than are contained in the DestList ({autoDest.DestListCount:N0}). Use --WithDirectory to view them **");
+                    _logger.Fatal(
+                        $"** There are more items in the Directory ({autoDest.Directory.Count - 2:N0}) than are contained in the DestList ({autoDest.DestListCount:N0}). Use --WithDir to view them **");
                     _logger.Info("");
                 }
 
@@ -1627,9 +1483,7 @@ namespace JLECmd
                     $"---------- Processed '{autoDest.SourceFile}' in {sw.Elapsed.TotalSeconds:N8} seconds ----------");
 
                 if (_fluentCommandLineParser.Object.Quiet == false)
-                {
                     _logger.Info("\r\n");
-                }
 
                 return autoDest;
             }
@@ -1647,27 +1501,19 @@ namespace JLECmd
         private static void DumpLnkDetail(LnkFile lnk)
         {
             if ((lnk.Header.DataFlags & Header.DataFlag.HasName) == Header.DataFlag.HasName)
-            {
                 _logger.Info($"  Name: {lnk.Name}");
-            }
 
             if ((lnk.Header.DataFlags & Header.DataFlag.HasRelativePath) ==
                 Header.DataFlag.HasRelativePath)
-            {
                 _logger.Info($"  Relative Path: {lnk.RelativePath}");
-            }
 
             if ((lnk.Header.DataFlags & Header.DataFlag.HasWorkingDir) ==
                 Header.DataFlag.HasWorkingDir)
-            {
                 _logger.Info($"  Working Directory: {lnk.WorkingDirectory}");
-            }
 
             if ((lnk.Header.DataFlags & Header.DataFlag.HasArguments) ==
                 Header.DataFlag.HasArguments)
-            {
                 _logger.Info($"  Arguments: {lnk.Arguments}");
-            }
 
             if ((lnk.Header.DataFlags & Header.DataFlag.HasLinkInfo) ==
                 Header.DataFlag.HasLinkInfo)
@@ -1697,9 +1543,7 @@ namespace JLECmd
                     _logger.Warn("  Network share information");
 
                     if (lnk.NetworkShareInfo.DeviceName.Length > 0)
-                    {
                         _logger.Info($"    Device name: {lnk.NetworkShareInfo.DeviceName}");
-                    }
 
                     _logger.Info($"    Share name: {lnk.NetworkShareInfo.NetworkShareName}");
 
@@ -1710,25 +1554,26 @@ namespace JLECmd
                 }
 
                 if (lnk.LocalPath?.Length > 0)
-                {
                     _logger.Info($"  Local path: {lnk.LocalPath}");
-                }
 
                 if (lnk.CommonPath.Length > 0)
-                {
                     _logger.Info($"  Common path: {lnk.CommonPath}");
-                }
             }
         }
 
         private static void DumpLnkFile(LnkFile lnk)
         {
-
             _logger.Warn("--- Header ---");
 
-            var tc1 = lnk.Header.TargetCreationDate.Year == 1601 ? "" : lnk.Header.TargetCreationDate.ToString(_fluentCommandLineParser.Object.DateTimeFormat);
-            var tm1 = lnk.Header.TargetModificationDate.Year == 1601 ? "" : lnk.Header.TargetModificationDate.ToString(_fluentCommandLineParser.Object.DateTimeFormat);
-            var ta1 = lnk.Header.TargetLastAccessedDate.Year == 1601 ? "" : lnk.Header.TargetLastAccessedDate.ToString(_fluentCommandLineParser.Object.DateTimeFormat);
+            var tc1 = lnk.Header.TargetCreationDate.Year == 1601
+                ? ""
+                : lnk.Header.TargetCreationDate.ToString(_fluentCommandLineParser.Object.DateTimeFormat);
+            var tm1 = lnk.Header.TargetModificationDate.Year == 1601
+                ? ""
+                : lnk.Header.TargetModificationDate.ToString(_fluentCommandLineParser.Object.DateTimeFormat);
+            var ta1 = lnk.Header.TargetLastAccessedDate.Year == 1601
+                ? ""
+                : lnk.Header.TargetLastAccessedDate.ToString(_fluentCommandLineParser.Object.DateTimeFormat);
 
             _logger.Info($"  Target created:  {tc1}");
             _logger.Info($"  Target modified: {tm1}");
@@ -1739,9 +1584,7 @@ namespace JLECmd
             _logger.Info($"  File attributes: {lnk.Header.FileAttributes}");
 
             if (lnk.Header.HotKey.Length > 0)
-            {
                 _logger.Info($"  Hot key: {lnk.Header.HotKey}");
-            }
 
             _logger.Info($"  Icon index: {lnk.Header.IconIndex}");
             _logger.Info(
@@ -1750,29 +1593,19 @@ namespace JLECmd
             _logger.Info("");
 
             if ((lnk.Header.DataFlags & Header.DataFlag.HasName) == Header.DataFlag.HasName)
-            {
                 _logger.Info($"Name: {lnk.Name}");
-            }
 
             if ((lnk.Header.DataFlags & Header.DataFlag.HasRelativePath) == Header.DataFlag.HasRelativePath)
-            {
                 _logger.Info($"Relative Path: {lnk.RelativePath}");
-            }
 
             if ((lnk.Header.DataFlags & Header.DataFlag.HasWorkingDir) == Header.DataFlag.HasWorkingDir)
-            {
                 _logger.Info($"Working Directory: {lnk.WorkingDirectory}");
-            }
 
             if ((lnk.Header.DataFlags & Header.DataFlag.HasArguments) == Header.DataFlag.HasArguments)
-            {
                 _logger.Info($"Arguments: {lnk.Arguments}");
-            }
 
             if ((lnk.Header.DataFlags & Header.DataFlag.HasIconLocation) == Header.DataFlag.HasIconLocation)
-            {
                 _logger.Info($"Icon Location: {lnk.IconLocation}");
-            }
 
             if ((lnk.Header.DataFlags & Header.DataFlag.HasLinkInfo) == Header.DataFlag.HasLinkInfo)
             {
@@ -1800,9 +1633,7 @@ namespace JLECmd
                     _logger.Warn("  Network share information");
 
                     if (lnk.NetworkShareInfo.DeviceName.Length > 0)
-                    {
                         _logger.Info($"    Device name: {lnk.NetworkShareInfo.DeviceName}");
-                    }
 
                     _logger.Info($"    Share name: {lnk.NetworkShareInfo.NetworkShareName}");
 
@@ -1812,14 +1643,10 @@ namespace JLECmd
                 }
 
                 if (lnk.LocalPath?.Length > 0)
-                {
                     _logger.Info($"  Local path: {lnk.LocalPath}");
-                }
 
                 if (lnk.CommonPath.Length > 0)
-                {
                     _logger.Info($"  Common path: {lnk.CommonPath}");
-                }
             }
 
             if (lnk.TargetIDs.Count > 0)
@@ -1829,9 +1656,7 @@ namespace JLECmd
                 var absPath = string.Empty;
 
                 foreach (var shellBag in lnk.TargetIDs)
-                {
                     absPath += shellBag.Value + @"\";
-                }
 
                 _logger.Error("--- Target ID information (Format: Type ==> Value) ---");
                 _logger.Info("");
@@ -1855,13 +1680,10 @@ namespace JLECmd
 
                             _logger.Info($"    Short name: {b32.ShortName}");
                             if (b32.LastModificationTime.HasValue)
-                            {
-                                _logger.Info($"    Modified: {b32.LastModificationTime.Value.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
-                            }
+                                _logger.Info(
+                                    $"    Modified: {b32.LastModificationTime.Value.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
                             else
-                            {
                                 _logger.Info($"    Modified:");
-                            }
 
 
                             var extensionNumber32 = 0;
@@ -1879,33 +1701,23 @@ namespace JLECmd
 
                                         _logger.Info($"    Long name: {b4.LongName}");
                                         if (b4.LocalisedName.Length > 0)
-                                        {
                                             _logger.Info($"    Localized name: {b4.LocalisedName}");
-                                        }
 
                                         if (b4.CreatedOnTime.HasValue)
-                                        {
-                                            _logger.Info($"    Created: {b4.CreatedOnTime.Value.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
-                                        }
+                                            _logger.Info(
+                                                $"    Created: {b4.CreatedOnTime.Value.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
                                         else
-                                        {
                                             _logger.Info($"    Created:");
-                                        }
 
                                         if (b4.LastAccessTime.HasValue)
-                                        {
-                                            _logger.Info($"    Last access: {b4.LastAccessTime.Value.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
-                                        }
+                                            _logger.Info(
+                                                $"    Last access: {b4.LastAccessTime.Value.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
                                         else
-                                        {
                                             _logger.Info($"    Last access: ");
-                                        }
 
                                         if (b4.MFTInformation.MFTEntryNumber > 0)
-                                        {
                                             _logger.Info(
                                                 $"    MFT entry/sequence #: {b4.MFTInformation.MFTEntryNumber}/{b4.MFTInformation.MFTSequenceNumber} (0x{b4.MFTInformation.MFTEntryNumber:X}/0x{b4.MFTInformation.MFTSequenceNumber:X})");
-                                        }
                                     }
                                     else if (extensionBlock is Beef0025)
                                     {
@@ -1939,14 +1751,10 @@ namespace JLECmd
 
                             _logger.Info($"    Short name: {b3x.ShortName}");
                             if (b3x.LastModificationTime.HasValue)
-                            {
                                 _logger.Info(
                                     $"    Modified: {b3x.LastModificationTime.Value.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
-                            }
                             else
-                            {
                                 _logger.Info($"    Modified:");
-                            }
 
                             var extensionNumber = 0;
                             if (b3x.ExtensionBlocks.Count > 0)
@@ -1963,33 +1771,23 @@ namespace JLECmd
 
                                         _logger.Info($"    Long name: {b4.LongName}");
                                         if (b4.LocalisedName.Length > 0)
-                                        {
                                             _logger.Info($"    Localized name: {b4.LocalisedName}");
-                                        }
 
                                         if (b4.CreatedOnTime.HasValue)
-                                        {
-                                            _logger.Info($"    Created: {b4.CreatedOnTime.Value.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
-                                        }
+                                            _logger.Info(
+                                                $"    Created: {b4.CreatedOnTime.Value.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
                                         else
-                                        {
                                             _logger.Info($"    Created:");
-                                        }
 
                                         if (b4.LastAccessTime.HasValue)
-                                        {
-                                            _logger.Info($"    Last access: {b4.LastAccessTime.Value.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
-                                        }
+                                            _logger.Info(
+                                                $"    Last access: {b4.LastAccessTime.Value.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
                                         else
-                                        {
                                             _logger.Info($"    Last access: ");
-                                        }
 
                                         if (b4.MFTInformation.MFTEntryNumber > 0)
-                                        {
                                             _logger.Info(
                                                 $"    MFT entry/sequence #: {b4.MFTInformation.MFTEntryNumber}/{b4.MFTInformation.MFTSequenceNumber} (0x{b4.MFTInformation.MFTEntryNumber:X}/0x{b4.MFTInformation.MFTSequenceNumber:X})");
-                                        }
                                     }
                                     else if (extensionBlock is Beef0025)
                                     {
@@ -2026,7 +1824,6 @@ namespace JLECmd
                                 var propCount = 0;
 
                                 foreach (var prop in b00.PropertyStore.Sheets)
-                                {
                                     foreach (var propertyName in prop.PropertyNames)
                                     {
                                         propCount += 1;
@@ -2039,21 +1836,16 @@ namespace JLECmd
 
                                         _logger.Info($"     {prefix} {suffix} ==> {propertyName.Value}");
                                     }
-                                }
 
                                 if (propCount == 0)
-                                {
                                     _logger.Warn("     (Property store is empty)");
-                                }
                             }
 
                             break;
                         case "SHELLBAG0X01":
                             var baaaa1f = shellBag as ShellBag0X01;
                             if (baaaa1f.DriveLetter.Length > 0)
-                            {
                                 _logger.Info($"  Drive letter: {baaaa1f.DriveLetter}");
-                            }
                             break;
                         case "SHELLBAG0X1F":
 
@@ -2065,7 +1857,6 @@ namespace JLECmd
                                 var propCount = 0;
 
                                 foreach (var prop in b1f.PropertyStore.Sheets)
-                                {
                                     foreach (var propertyName in prop.PropertyNames)
                                     {
                                         propCount += 1;
@@ -2078,12 +1869,9 @@ namespace JLECmd
 
                                         _logger.Info($"     {prefix} {suffix} ==> {propertyName.Value}");
                                     }
-                                }
 
                                 if (propCount == 0)
-                                {
                                     _logger.Warn("     (Property store is empty)");
-                                }
                             }
 
                             break;
@@ -2101,23 +1889,18 @@ namespace JLECmd
                         case "SHELLBAG0X71":
                             var b71 = shellBag as ShellBag0X71;
                             if (b71.PropertyStore?.Sheets.Count > 0)
-                            {
                                 _logger.Fatal(
                                     "Property stores found! Please email lnk file to saericzimmerman@gmail.com so support can be added!!");
-                            }
 
                             break;
                         case "SHELLBAG0X74":
                             var b74 = shellBag as ShellBag0X74;
 
                             if (b74.LastModificationTime.HasValue)
-                            {
-                                _logger.Info($"    Modified: {b74.LastModificationTime.Value.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
-                            }
+                                _logger.Info(
+                                    $"    Modified: {b74.LastModificationTime.Value.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
                             else
-                            {
                                 _logger.Info($"    Modified:");
-                            }
 
                             var extensionNumber74 = 0;
                             if (b74.ExtensionBlocks.Count > 0)
@@ -2134,32 +1917,22 @@ namespace JLECmd
 
                                         _logger.Info($"    Long name: {b4.LongName}");
                                         if (b4.LocalisedName.Length > 0)
-                                        {
                                             _logger.Info($"    Localized name: {b4.LocalisedName}");
-                                        }
 
                                         if (b4.CreatedOnTime.HasValue)
-                                        {
-                                            _logger.Info($"    Created: {b4.CreatedOnTime.Value.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
-                                        }
+                                            _logger.Info(
+                                                $"    Created: {b4.CreatedOnTime.Value.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
                                         else
-                                        {
                                             _logger.Info($"    Created:");
-                                        }
 
                                         if (b4.LastAccessTime.HasValue)
-                                        {
-                                            _logger.Info($"    Last access: {b4.LastAccessTime.Value.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
-                                        }
+                                            _logger.Info(
+                                                $"    Last access: {b4.LastAccessTime.Value.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
                                         else
-                                        {
                                             _logger.Info($"    Last access: ");
-                                        }
                                         if (b4.MFTInformation.MFTEntryNumber > 0)
-                                        {
                                             _logger.Info(
                                                 $"    MFT entry/sequence #: {b4.MFTInformation.MFTEntryNumber}/{b4.MFTInformation.MFTSequenceNumber} (0x{b4.MFTInformation.MFTEntryNumber:X}/0x{b4.MFTInformation.MFTSequenceNumber:X})");
-                                        }
                                     }
                                     else if (extensionBlock is Beef0025)
                                     {
@@ -2203,7 +1976,6 @@ namespace JLECmd
             }
 
 
-
             if (lnk.ExtraBlocks.Count > 0)
             {
                 _logger.Info("");
@@ -2211,7 +1983,6 @@ namespace JLECmd
                 _logger.Info("");
 
                 foreach (var extraDataBase in lnk.ExtraBlocks)
-                {
                     switch (extraDataBase.GetType().Name)
                     {
                         case "ConsoleDataBlock":
@@ -2278,7 +2049,6 @@ namespace JLECmd
                                 var propCount = 0;
 
                                 foreach (var prop in psdb.PropertyStore.Sheets)
-                                {
                                     foreach (var propertyName in prop.PropertyNames)
                                     {
                                         propCount += 1;
@@ -2290,12 +2060,9 @@ namespace JLECmd
 
                                         _logger.Info($"   {prefix} {suffix} ==> {propertyName.Value}");
                                     }
-                                }
 
                                 if (propCount == 0)
-                                {
                                     _logger.Warn("   (Property store is empty)");
-                                }
                             }
                             _logger.Info("");
                             break;
@@ -2317,7 +2084,8 @@ namespace JLECmd
                             _logger.Info($"   Machine ID: {tdb.MachineId}");
                             _logger.Info($"   MAC Address: {tdb.MacAddress}");
                             _logger.Info($"   MAC Vendor: {GetVendorFromMac(tdb.MacAddress)}");
-                            _logger.Info($"   Creation: {tdb.CreationTime.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
+                            _logger.Info(
+                                $"   Creation: {tdb.CreationTime.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
                             _logger.Info("");
                             _logger.Info($"   Volume Droid: {tdb.VolumeDroid}");
                             _logger.Info($"   Volume Droid Birth: {tdb.VolumeDroidBirth}");
@@ -2338,7 +2106,6 @@ namespace JLECmd
                             _logger.Info("");
                             break;
                     }
-                }
             }
         }
 
@@ -2353,9 +2120,7 @@ namespace JLECmd
             var vendor = "(Unknown vendor)";
 
             if (_macList.ContainsKey(mac))
-            {
                 vendor = _macList[mac];
-            }
 
             return vendor;
         }
@@ -2393,9 +2158,7 @@ namespace JLECmd
                         _logger.Warn($"  Entry #: {entryNum}, lnk count: {entry.LnkFiles.Count:N0} Rank: {entry.Rank}");
 
                         if (entry.Name.Length > 0)
-                        {
                             _logger.Info($"   Name: {entry.Name}");
-                        }
 
                         _logger.Info("");
 
@@ -2425,27 +2188,19 @@ namespace JLECmd
                             if (_fluentCommandLineParser.Object.IncludeLnkDetail)
                             {
                                 if ((lnkFile.Header.DataFlags & Header.DataFlag.HasName) == Header.DataFlag.HasName)
-                                {
                                     _logger.Info($"  Name: {lnkFile.Name}");
-                                }
 
                                 if ((lnkFile.Header.DataFlags & Header.DataFlag.HasRelativePath) ==
                                     Header.DataFlag.HasRelativePath)
-                                {
                                     _logger.Info($"  Relative Path: {lnkFile.RelativePath}");
-                                }
 
                                 if ((lnkFile.Header.DataFlags & Header.DataFlag.HasWorkingDir) ==
                                     Header.DataFlag.HasWorkingDir)
-                                {
                                     _logger.Info($"  Working Directory: {lnkFile.WorkingDirectory}");
-                                }
 
                                 if ((lnkFile.Header.DataFlags & Header.DataFlag.HasArguments) ==
                                     Header.DataFlag.HasArguments)
-                                {
                                     _logger.Info($"  Arguments: {lnkFile.Arguments}");
-                                }
 
                                 if ((lnkFile.Header.DataFlags & Header.DataFlag.HasLinkInfo) ==
                                     Header.DataFlag.HasLinkInfo)
@@ -2475,9 +2230,7 @@ namespace JLECmd
                                         _logger.Warn("  Network share information");
 
                                         if (lnkFile.NetworkShareInfo.DeviceName.Length > 0)
-                                        {
                                             _logger.Info($"    Device name: {lnkFile.NetworkShareInfo.DeviceName}");
-                                        }
 
                                         _logger.Info($"    Share name: {lnkFile.NetworkShareInfo.NetworkShareName}");
 
@@ -2488,14 +2241,10 @@ namespace JLECmd
                                     }
 
                                     if (lnkFile.LocalPath?.Length > 0)
-                                    {
                                         _logger.Info($"  Local path: {lnkFile.LocalPath}");
-                                    }
 
                                     if (lnkFile.CommonPath.Length > 0)
-                                    {
                                         _logger.Info($"  Common path: {lnkFile.CommonPath}");
-                                    }
                                 }
                             }
 
@@ -2506,9 +2255,7 @@ namespace JLECmd
                                 var absPath = string.Empty;
 
                                 foreach (var shellBag in lnkFile.TargetIDs)
-                                {
                                     absPath += shellBag.Value + @"\";
-                                }
 
                                 _logger.Info($"  Absolute path: {GetAbsolutePathFromTargetIDs(lnkFile.TargetIDs)}");
                                 _logger.Info("");
@@ -2526,17 +2273,13 @@ namespace JLECmd
                 sw.Stop();
 
                 if (_fluentCommandLineParser.Object.Quiet == false)
-                {
                     _logger.Info("");
-                }
 
                 _logger.Info(
                     $"---------- Processed '{customDest.SourceFile}' in {sw.Elapsed.TotalSeconds:N8} seconds ----------");
 
                 if (_fluentCommandLineParser.Object.Quiet == false)
-                {
                     _logger.Info("\r\n");
-                }
 
                 return customDest;
             }
