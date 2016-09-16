@@ -164,6 +164,11 @@ namespace JLECmd
                 .WithDescription("When true, show contents of Directory not accounted for in DestList entries")
                 .SetDefault(false);
 
+            _fluentCommandLineParser.Setup(arg => arg.Debug)
+                .As("Debug")
+                .WithDescription("Debug mode")
+                .SetDefault(false);
+
 
             var header =
                 $"JLECmd version {Assembly.GetExecutingAssembly().GetName().Version}" +
@@ -233,6 +238,14 @@ namespace JLECmd
             _processedCustomFiles = new List<CustomDestination>();
 
             _failedFiles = new List<string>();
+
+            if (_fluentCommandLineParser.Object.Debug)
+            {
+                LogManager.Configuration.LoggingRules.First().EnableLoggingForLevel(LogLevel.Debug);
+                LogManager.ReconfigExistingLoggers();
+            }
+
+          
 
             if (_fluentCommandLineParser.Object.File?.Length > 0)
             {
@@ -917,8 +930,16 @@ namespace JLECmd
             var mt = DateTimeOffset.FromFileTime(fs.LastWriteTime.ToFileTime()).ToUniversalTime();
             var at = DateTimeOffset.FromFileTime(fs.LastAccessTime.ToFileTime()).ToUniversalTime();
 
+            
+
             foreach (var destListEntry in auto.DestListEntries)
             {
+                if (_fluentCommandLineParser.Object.Debug)
+                {
+                    _logger.Debug("Dumping destListEntry");
+                    destListEntry.PrintDump();
+                }
+
                 var csOut = new AutoCsvOut
                 {
                     SourceFile = auto.SourceFile,
@@ -986,6 +1007,12 @@ namespace JLECmd
                     Notes = string.Empty
                 };
 
+                if (_fluentCommandLineParser.Object.Debug)
+                {
+                    _logger.Debug("CSOut values:");
+                    csOut.PrintDump();
+                }
+
 
                 if (destListEntry.Lnk == null)
                 {
@@ -993,11 +1020,33 @@ namespace JLECmd
                     continue;
                 }
 
+                _logger.Debug("Lnk file isn't null. Continuing");
+
+                _logger.Debug($"Getting absolute path. TargetID count: {destListEntry.Lnk.TargetIDs.Count}");
+
                 var target = GetAbsolutePathFromTargetIDs(destListEntry.Lnk.TargetIDs);
+
+                _logger.Debug($"GetAbsolutePathFromTargetIDs Target is: {target}");
+
                 if (target.Length == 0)
-                    target = $"{destListEntry.Lnk.NetworkShareInfo.NetworkShareName}\\\\{destListEntry.Lnk.CommonPath}";
+                {
+                    _logger.Debug($"Target length is 0. building alternate path");
+
+                    if (destListEntry.Lnk.NetworkShareInfo != null)
+                    {
+                        target =
+                            $"{destListEntry.Lnk.NetworkShareInfo.NetworkShareName}\\\\{destListEntry.Lnk.CommonPath}";
+                    }
+                    else
+                    {
+                        target =
+                            $"{destListEntry.Lnk.LocalPath}\\\\{destListEntry.Lnk.CommonPath}";
+                    }
+                }
 
                 csOut.TargetIDAbsolutePath = target;
+
+                _logger.Debug($"Target is: {target}");
 
                 /*  if (destListEntry.Lnk.TargetIDs?.Count > 0)
                   {
@@ -1009,7 +1058,11 @@ namespace JLECmd
                     Header.DataFlag.HasArguments)
                     csOut.Arguments = destListEntry.Lnk.Arguments ?? string.Empty;
 
+                _logger.Debug($"csOut.Arguments is: {csOut.Arguments}");
+
                 csOut.WorkingDirectory = destListEntry.Lnk.WorkingDirectory;
+
+                _logger.Debug($"csOut.WorkingDirectory is: {csOut.WorkingDirectory}");
 
                 var ebPresent = string.Empty;
 
@@ -1023,6 +1076,8 @@ namespace JLECmd
                     ebPresent = string.Join(", ", names);
                 }
 
+                _logger.Debug($"csOut.ExtraBlocksPresent is: {ebPresent}");
+
                 csOut.ExtraBlocksPresent = ebPresent;
 
                 var tnb =
@@ -1031,6 +1086,8 @@ namespace JLECmd
 
                 if (tnb != null)
                 {
+                    _logger.Debug($"Found tracker block");
+
                     var tnbBlock = tnb as TrackerDataBaseBlock;
 
                     csOut.TrackerCreatedOn =
@@ -1042,6 +1099,8 @@ namespace JLECmd
 
                 if (destListEntry.Lnk.TargetIDs?.Count > 0)
                 {
+                    _logger.Debug($"Target ID count: {destListEntry.Lnk.TargetIDs.Count}");
+
                     var si = destListEntry.Lnk.TargetIDs.Last();
 
                     if (si.ExtensionBlocks?.Count > 0)
@@ -1060,6 +1119,8 @@ namespace JLECmd
                         }
                     }
                 }
+
+                _logger.Debug($"Adding to csList");
 
                 csList.Add(csOut);
             }
@@ -1303,7 +1364,11 @@ namespace JLECmd
 
             try
             {
+                _logger.Debug($"Opening {jlFile}");
+
                 var autoDest = JumpList.JumpList.LoadAutoJumplist(jlFile);
+
+                _logger.Debug($"Opened {jlFile}");
 
                 if (_fluentCommandLineParser.Object.Quiet == false)
                 {
@@ -2431,5 +2496,6 @@ namespace JLECmd
 
         public bool PreciseTimestamps { get; set; }
         public bool WithDirectory { get; set; }
+        public bool Debug { get; set; }
     }
 }
