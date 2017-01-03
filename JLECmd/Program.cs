@@ -55,28 +55,27 @@ namespace JLECmd
             }
         }
 
-        private static void LoadMACs()
-        {
-            var lines = Resources.MACs.Split(new[] {Environment.NewLine}, StringSplitOptions.None);
-
-            foreach (var line in lines)
-            {
-                var segs = line.ToUpperInvariant().Split('\t');
-                var key = segs[0].Trim();
-                var val = segs[1].Trim();
-
-                if (_macList.ContainsKey(key) == false)
-                {
-                    _macList.Add(key, val);
-                }
-            }
-        }
+//        private static void LoadMACs()
+//        {
+//            var lines = Resources.MACs.Split(new[] {Environment.NewLine}, StringSplitOptions.None);
+//
+//            foreach (var line in lines)
+//            {
+//                var segs = line.ToUpperInvariant().Split('\t');
+//                var key = segs[0].Trim();
+//                var val = segs[1].Trim();
+//
+//                if (_macList.ContainsKey(key) == false)
+//                {
+//                    _macList.Add(key, val);
+//                }
+//            }
+//        }
 
 
         private static void Main(string[] args)
         {
             ExceptionlessClient.Default.Startup("ZqbYbvr4FIRjkpUrqCLC5N4RfKIuo9YIVmpQuOje");
-            //LoadMACs();
 
             SetupNLog();
 
@@ -107,6 +106,7 @@ namespace JLECmd
                     "Process all files in directory vs. only files matching *.automaticDestinations-ms or *.customDestinations-ms\r\n")
                 .SetDefault(false);
 
+            
 
             _fluentCommandLineParser.Setup(arg => arg.CsvDirectory)
                 .As("csv")
@@ -143,6 +143,12 @@ namespace JLECmd
                 .WithDescription(
                     "Include full information about lnk files (Alternatively, dump lnk files using --dumpTo and process with LECmd)\r\n")
                 .SetDefault(false);
+
+            _fluentCommandLineParser.Setup(arg => arg.AppListIdFile).As("appIds")
+                .WithDescription(
+                    "Path to file containing AppIDs and descriptions (appid|description format). New appIds are added to the built-in list, existing appIds will have their descriptions updated")
+                .SetDefault(string.Empty);
+
 
             _fluentCommandLineParser.Setup(arg => arg.LnkDumpDirectory).As("dumpTo")
                 .WithDescription(
@@ -250,6 +256,22 @@ namespace JLECmd
                 LogManager.ReconfigExistingLoggers();
             }
 
+            if (_fluentCommandLineParser.Object.AppListIdFile?.Length > 0)
+            {
+                if (File.Exists(_fluentCommandLineParser.Object.AppListIdFile))
+                {
+                    _logger.Info($"Looking for AppIDs in '{_fluentCommandLineParser.Object.AppListIdFile}'");
+
+                    var added =   JumpList.JumpList.AppIdList.LoadAppListFromFile(_fluentCommandLineParser.Object.AppListIdFile);
+
+                    _logger.Info($"Loaded {added:N0} new AppIDs from '{_fluentCommandLineParser.Object.AppListIdFile}'\r\n");
+                }
+                else
+                {
+                    _logger.Warn($"'{_fluentCommandLineParser.Object.AppListIdFile}' does not exist!");
+                }
+                
+            }
 
             if (_fluentCommandLineParser.Object.File?.Length > 0)
             {
@@ -1514,6 +1536,8 @@ namespace JLECmd
             {
                 _logger.Debug($"Opening {jlFile}");
 
+                
+
                 var autoDest = JumpList.JumpList.LoadAutoJumplist(jlFile);
 
                 _logger.Debug($"Opened {jlFile}");
@@ -2764,6 +2788,8 @@ namespace JLECmd
         public bool JsonPretty { get; set; }
         public bool AllFiles { get; set; }
 
+        public string AppListIdFile { get; set; }
+
         public string LnkDumpDirectory { get; set; }
 
         public bool IncludeLnkDetail { get; set; }
@@ -2774,7 +2800,6 @@ namespace JLECmd
 
         public bool Quiet { get; set; }
 
-        //  public bool LocalTime { get; set; }
 
         public string DateTimeFormat { get; set; }
 
