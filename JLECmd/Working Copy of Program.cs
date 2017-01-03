@@ -7,7 +7,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Xml;
-using Exceptionless;
 using ExtensionBlocks;
 using Fclp;
 using Fclp.Internals.Extensions;
@@ -75,10 +74,9 @@ namespace JLECmd
 
         private static void Main(string[] args)
         {
-            ExceptionlessClient.Default.Startup("ZqbYbvr4FIRjkpUrqCLC5N4RfKIuo9YIVmpQuOje");
             //LoadMACs();
 
-            SetupNLog();
+            SetupNLog()
 
             _logger = LogManager.GetCurrentClassLogger();
 
