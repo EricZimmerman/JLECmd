@@ -55,24 +55,6 @@ namespace JLECmd
             }
         }
 
-//        private static void LoadMACs()
-//        {
-//            var lines = Resources.MACs.Split(new[] {Environment.NewLine}, StringSplitOptions.None);
-//
-//            foreach (var line in lines)
-//            {
-//                var segs = line.ToUpperInvariant().Split('\t');
-//                var key = segs[0].Trim();
-//                var val = segs[1].Trim();
-//
-//                if (_macList.ContainsKey(key) == false)
-//                {
-//                    _macList.Add(key, val);
-//                }
-//            }
-//        }
-
-
         private static void Main(string[] args)
         {
             ExceptionlessClient.Default.Startup("ZqbYbvr4FIRjkpUrqCLC5N4RfKIuo9YIVmpQuOje");
@@ -636,8 +618,8 @@ namespace JLECmd
                         xml?.WriteElementString("FileAttributes", o.FileAttributes);
                         xml?.WriteElementString("HeaderFlags", o.HeaderFlags);
                         xml?.WriteElementString("DriveType", o.DriveType);
-                        xml?.WriteElementString("DriveSerialNumber", o.DriveSerialNumber);
-                        xml?.WriteElementString("DriveLabel", o.DriveLabel);
+                        xml?.WriteElementString("VolumeSerialNumber", o.VolumeSerialNumber);
+                        xml?.WriteElementString("VolumeLabel", o.VolumeLabel);
                         xml?.WriteElementString("LocalPath", o.LocalPath);
                         xml?.WriteElementString("CommonPath", o.CommonPath);
 
@@ -859,8 +841,8 @@ namespace JLECmd
                             xml?.WriteElementString("FileAttributes", o.FileAttributes);
                             xml?.WriteElementString("HeaderFlags", o.HeaderFlags);
                             xml?.WriteElementString("DriveType", o.DriveType);
-                            xml?.WriteElementString("DriveSerialNumber", o.DriveSerialNumber);
-                            xml?.WriteElementString("DriveLabel", o.DriveLabel);
+                            xml?.WriteElementString("VolumeSerialNumber", o.VolumeSerialNumber);
+                            xml?.WriteElementString("VolumeLabel", o.VolumeLabel);
                             xml?.WriteElementString("LocalPath", o.LocalPath);
                             xml?.WriteElementString("CommonPath", o.CommonPath);
 
@@ -966,8 +948,8 @@ namespace JLECmd
                             : lnk.Header.TargetLastAccessedDate.ToString(
                                 _fluentCommandLineParser.Object.DateTimeFormat),
                     CommonPath = lnk.CommonPath,
-                    DriveLabel = lnk.VolumeInfo?.VolumeLabel,
-                    DriveSerialNumber = lnk.VolumeInfo?.DriveSerialNumber,
+                    VolumeLabel = lnk.VolumeInfo?.VolumeLabel,
+                    VolumeSerialNumber = lnk.VolumeInfo?.VolumeSerialNumber,
                     DriveType =
                         lnk.VolumeInfo == null ? "(None)" : GetDescriptionFromEnumValue(lnk.VolumeInfo.DriveType),
                     FileAttributes = lnk.Header.FileAttributes.ToString(),
@@ -1123,8 +1105,8 @@ namespace JLECmd
                             : destListEntry.Lnk?.Header.TargetLastAccessedDate.ToString(
                                 _fluentCommandLineParser.Object.DateTimeFormat),
                     CommonPath = destListEntry.Lnk?.CommonPath,
-                    DriveLabel = destListEntry.Lnk?.VolumeInfo?.VolumeLabel,
-                    DriveSerialNumber = destListEntry.Lnk?.VolumeInfo?.DriveSerialNumber,
+                    VolumeLabel = destListEntry.Lnk?.VolumeInfo?.VolumeLabel,
+                    VolumeSerialNumber = destListEntry.Lnk?.VolumeInfo?.VolumeSerialNumber,
                     DriveType =
                         destListEntry.Lnk?.VolumeInfo == null
                             ? "(None)"
@@ -1327,8 +1309,8 @@ namespace JLECmd
                                     : f?.Header.TargetLastAccessedDate.ToString(
                                         _fluentCommandLineParser.Object.DateTimeFormat),
                             CommonPath = f?.CommonPath,
-                            DriveLabel = f?.VolumeInfo?.VolumeLabel,
-                            DriveSerialNumber = f?.VolumeInfo?.DriveSerialNumber,
+                            VolumeLabel = f?.VolumeInfo?.VolumeLabel,
+                            VolumeSerialNumber = f?.VolumeInfo?.VolumeSerialNumber,
                             DriveType =
                                 f?.VolumeInfo == null
                                     ? "(None)"
@@ -1790,7 +1772,7 @@ namespace JLECmd
                     _logger.Warn(">>Volume information");
                     _logger.Info(
                         $"  Drive type: {GetDescriptionFromEnumValue(lnk.VolumeInfo.DriveType)}");
-                    _logger.Info($"  Serial number: {lnk.VolumeInfo.DriveSerialNumber}");
+                    _logger.Info($"  Serial number: {lnk.VolumeInfo.VolumeSerialNumber}");
 
                     var label = lnk.VolumeInfo.VolumeLabel.Length > 0
                         ? lnk.VolumeInfo.VolumeLabel
@@ -1898,7 +1880,7 @@ namespace JLECmd
                     _logger.Info("");
                     _logger.Warn(">>Volume information");
                     _logger.Info($"  Drive type: {GetDescriptionFromEnumValue(lnk.VolumeInfo.DriveType)}");
-                    _logger.Info($"  Serial number: {lnk.VolumeInfo.DriveSerialNumber}");
+                    _logger.Info($"  Serial number: {lnk.VolumeInfo.VolumeSerialNumber}");
 
                     var label = lnk.VolumeInfo.VolumeLabel.Length > 0
                         ? lnk.VolumeInfo.VolumeLabel
@@ -2575,7 +2557,7 @@ namespace JLECmd
                                         _logger.Warn(">>Volume information");
                                         _logger.Info(
                                             $"  Drive type: {GetDescriptionFromEnumValue(lnkFile.VolumeInfo.DriveType)}");
-                                        _logger.Info($"  Serial number: {lnkFile.VolumeInfo.DriveSerialNumber}");
+                                        _logger.Info($"  Serial number: {lnkFile.VolumeInfo.VolumeSerialNumber}");
 
                                         var label = lnkFile.VolumeInfo.VolumeLabel.Length > 0
                                             ? lnkFile.VolumeInfo.VolumeLabel
@@ -2719,14 +2701,14 @@ namespace JLECmd
         public string TargetCreated { get; set; }
         public string TargetModified { get; set; }
         public string TargetAccessed { get; set; }
-        public int FileSize { get; set; }
+        public uint FileSize { get; set; }
         public string RelativePath { get; set; }
         public string WorkingDirectory { get; set; }
         public string FileAttributes { get; set; }
         public string HeaderFlags { get; set; }
         public string DriveType { get; set; }
-        public string DriveSerialNumber { get; set; }
-        public string DriveLabel { get; set; }
+        public string VolumeSerialNumber { get; set; }
+        public string VolumeLabel { get; set; }
         public string LocalPath { get; set; }
         public string CommonPath { get; set; }
         public string TargetIDAbsolutePath { get; set; }
@@ -2758,14 +2740,14 @@ namespace JLECmd
         public string TargetCreated { get; set; }
         public string TargetModified { get; set; }
         public string TargetAccessed { get; set; }
-        public int FileSize { get; set; }
+        public uint FileSize { get; set; }
         public string RelativePath { get; set; }
         public string WorkingDirectory { get; set; }
         public string FileAttributes { get; set; }
         public string HeaderFlags { get; set; }
         public string DriveType { get; set; }
-        public string DriveSerialNumber { get; set; }
-        public string DriveLabel { get; set; }
+        public string VolumeSerialNumber { get; set; }
+        public string VolumeLabel { get; set; }
         public string LocalPath { get; set; }
         public string CommonPath { get; set; }
         public string TargetIDAbsolutePath { get; set; }
