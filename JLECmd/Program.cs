@@ -1062,7 +1062,7 @@ namespace JLECmd
                     DestListVersion = auto.DestListVersion.ToString(),
                     MRU = destListEntry.MRUPosition.ToString("N0"),
                     LastUsedEntryNumber = auto.LastUsedEntryNumber.ToString(),
-                    EntryNumber = destListEntry.EntryNumber.ToString(),
+                    EntryNumber = destListEntry.EntryNumber.ToString("X"),
                     CreationTime =
                         destListEntry.CreatedOn.Year == 1582
                             ? string.Empty
