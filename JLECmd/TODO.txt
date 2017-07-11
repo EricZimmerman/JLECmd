@@ -1,0 +1,1 @@
+As a feature request for jumplist explorer it would be helpful to have a "carve lnk" for non-fragment lnk files.
