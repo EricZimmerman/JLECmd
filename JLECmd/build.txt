@@ -1,0 +1,4 @@
+﻿libz add --libz Other.libz --include *.dll --move
+libz inject-libz -assembly .\JleCmd.exe --libz .\Other.libz --move
+libz instrument --assembly .\JleCmd.exe --libz-resources
+(sign exe)

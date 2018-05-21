@@ -243,3 +243,5 @@ ModelManifest.xml
 # FAKE - F# Make
 .fake/
 *.saproj
+/.idea/.idea.JLECmd/.idea
+/.idea/.idea.JLECmd

@@ -37,10 +37,12 @@ namespace JLECmd
 
         private static List<string> _failedFiles;
 
-        private static readonly Dictionary<string, string> _macList = new Dictionary<string, string>();
+        private static readonly Dictionary<string, string> MacList = new Dictionary<string, string>();
 
         private static List<AutomaticDestination> _processedAutoFiles;
         private static List<CustomDestination> _processedCustomFiles;
+
+        private static string exportExt = "tsv";
 
         private static bool CheckForDotnet46()
         {
@@ -158,6 +160,11 @@ namespace JLECmd
                 .WithDescription(
                     "Display higher precision for timestamps. Default is false").SetDefault(false);
 
+            _fluentCommandLineParser.Setup(arg => arg.CsvSeparator)
+                .As("cs")
+                .WithDescription(
+                    "When true, use comma instead of tab for field separator. Default is false").SetDefault(false);
+
 
             var header =
                 $"JLECmd version {Assembly.GetExecutingAssembly().GetName().Version}" +
@@ -216,6 +223,11 @@ namespace JLECmd
             {
                 _logger.Warn($"Directory '{_fluentCommandLineParser.Object.Directory}' not found. Exiting");
                 return;
+            }
+
+            if (_fluentCommandLineParser.Object.CsvSeparator)
+            {
+                exportExt = "csv";
             }
 
             _logger.Info(header);
@@ -465,7 +477,7 @@ namespace JLECmd
                     }
 
 
-                    var outName = $"{DateTimeOffset.Now.ToString("yyyyMMddHHmmss")}_CustomDestinations.tsv";
+                    var outName = $"{DateTimeOffset.Now:yyyyMMddHHmmss}_CustomDestinations.{exportExt}";
                     var outFile = Path.Combine(_fluentCommandLineParser.Object.CsvDirectory, outName);
 
 
@@ -476,8 +488,14 @@ namespace JLECmd
                     {
                         swCustom = new StreamWriter(outFile);
                         csvCustom = new CsvWriter(swCustom);
-                        csvCustom.Configuration.Delimiter = $"{'\t'}";
+
+                        if (_fluentCommandLineParser.Object.CsvSeparator == false)
+                        {
+                            csvCustom.Configuration.Delimiter = "\t";
+                        }
+
                         csvCustom.WriteHeader(typeof(CustomCsvOut));
+                        csvCustom.NextRecord();
                     }
                     catch (Exception ex)
                     {
@@ -509,7 +527,7 @@ namespace JLECmd
 
 
                     var outDir = Path.Combine(_fluentCommandLineParser.Object.xHtmlDirectory,
-                        $"{DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss")}_JLECmd_Custom_Output_for_{_fluentCommandLineParser.Object.xHtmlDirectory.Replace(@":\", "_").Replace(@"\", "_")}");
+                        $"{DateTimeOffset.UtcNow:yyyyMMddHHmmss}_JLECmd_Custom_Output_for_{_fluentCommandLineParser.Object.xHtmlDirectory.Replace(@":\", "_").Replace(@"\", "_")}");
 
                     if (Directory.Exists(outDir) == false)
                     {
@@ -674,7 +692,7 @@ namespace JLECmd
                         Directory.CreateDirectory(_fluentCommandLineParser.Object.CsvDirectory);
                     }
 
-                    var outName = $"{DateTimeOffset.Now.ToString("yyyyMMddHHmmss")}_AutomaticDestinations.tsv";
+                    var outName = $"{DateTimeOffset.Now:yyyyMMddHHmmss}_AutomaticDestinations.{exportExt}";
                     var outFile = Path.Combine(_fluentCommandLineParser.Object.CsvDirectory, outName);
 
 
@@ -685,8 +703,15 @@ namespace JLECmd
                     {
                         swAuto = new StreamWriter(outFile);
                         csvAuto = new CsvWriter(swAuto);
-                        csvAuto.Configuration.Delimiter = $"{'\t'}";
+                        
+
+                        if (_fluentCommandLineParser.Object.CsvSeparator == false)
+                        {
+                            csvAuto.Configuration.Delimiter = "\t";
+                        }
+
                         csvAuto.WriteHeader(typeof(AutoCsvOut));
+                        csvAuto.NextRecord();
                     }
                     catch (Exception ex)
                     {
@@ -718,7 +743,7 @@ namespace JLECmd
                     }
 
                     var outDir = Path.Combine(_fluentCommandLineParser.Object.xHtmlDirectory,
-                        $"{DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss")}_JLECmd_Automatic_Output_for_{_fluentCommandLineParser.Object.xHtmlDirectory.Replace(@":\", "_").Replace(@"\", "_")}");
+                        $"{DateTimeOffset.UtcNow:yyyyMMddHHmmss}_JLECmd_Automatic_Output_for_{_fluentCommandLineParser.Object.xHtmlDirectory.Replace(@":\", "_").Replace(@"\", "_")}");
 
                     if (Directory.Exists(outDir) == false)
                     {
@@ -780,86 +805,86 @@ namespace JLECmd
 
                     if (xml != null)
                     {
-                        xml?.WriteStartElement("Container");
-                        xml?.WriteElementString("SourceFile", processedFile.SourceFile);
-                        xml?.WriteElementString("SourceCreated",
+                        xml.WriteStartElement("Container");
+                        xml.WriteElementString("SourceFile", processedFile.SourceFile);
+                        xml.WriteElementString("SourceCreated",
                             ct.ToString(_fluentCommandLineParser.Object.DateTimeFormat));
-                        xml?.WriteElementString("SourceModified",
+                        xml.WriteElementString("SourceModified",
                             mt.ToString(_fluentCommandLineParser.Object.DateTimeFormat));
-                        xml?.WriteElementString("SourceAccessed",
+                        xml.WriteElementString("SourceAccessed",
                             at.ToString(_fluentCommandLineParser.Object.DateTimeFormat));
 
-                        xml?.WriteElementString("AppId", processedFile.AppId.AppId);
-                        xml?.WriteElementString("AppIdDescription", processedFile.AppId.Description);
-                        xml?.WriteElementString("DestListVersion", processedFile.DestListVersion.ToString());
-                        xml?.WriteElementString("LastUsedEntryNumber", processedFile.LastUsedEntryNumber.ToString());
+                        xml.WriteElementString("AppId", processedFile.AppId.AppId);
+                        xml.WriteElementString("AppIdDescription", processedFile.AppId.Description);
+                        xml.WriteElementString("DestListVersion", processedFile.DestListVersion.ToString());
+                        xml.WriteElementString("LastUsedEntryNumber", processedFile.LastUsedEntryNumber.ToString());
 
                         foreach (var o in records)
                         {
                             //XHTML
 
 
-                            xml?.WriteStartElement("lftColumn");
+                            xml.WriteStartElement("lftColumn");
 
-                            xml?.WriteStartElement("EntryNumber_large");
-                            xml?.WriteAttributeString("title", "Entry number");
-                            xml?.WriteString(o.EntryNumber);
-                            xml?.WriteEndElement();
+                            xml.WriteStartElement("EntryNumber_large");
+                            xml.WriteAttributeString("title", "Entry number");
+                            xml.WriteString(o.EntryNumber);
+                            xml.WriteEndElement();
 
-                            xml?.WriteEndElement();
+                            xml.WriteEndElement();
 
-                            xml?.WriteStartElement("rgtColumn");
+                            xml.WriteStartElement("rgtColumn");
 
 
-                            //       xml?.WriteElementString("EntryNumber", o.EntryNumber);
-                            xml?.WriteElementString("TargetIDAbsolutePath",
+                            //       xml.WriteElementString("EntryNumber", o.EntryNumber);
+                            xml.WriteElementString("TargetIDAbsolutePath",
                                 RemoveInvalidXmlChars(o.TargetIDAbsolutePath));
 
-                            xml?.WriteElementString("CreationTime", o.CreationTime);
-                            xml?.WriteElementString("LastModified", o.LastModified);
-                            xml?.WriteElementString("Hostname", o.Hostname);
-                            xml?.WriteElementString("MacAddress", o.MacAddress);
-                            xml?.WriteElementString("Path", o.Path);
-                            xml?.WriteElementString("PinStatus", o.PinStatus);
-                            xml?.WriteElementString("FileBirthDroid", o.FileBirthDroid);
-                            xml?.WriteElementString("FileDroid", o.FileDroid);
-                            xml?.WriteElementString("VolumeBirthDroid", o.VolumeBirthDroid);
-                            xml?.WriteElementString("VolumeDroid", o.VolumeDroid);
+                            xml.WriteElementString("CreationTime", o.CreationTime);
+                            xml.WriteElementString("LastModified", o.LastModified);
+                            xml.WriteElementString("Hostname", o.Hostname);
+                            xml.WriteElementString("MacAddress", o.MacAddress);
+                            xml.WriteElementString("Path", o.Path);
+                            xml.WriteElementString("PinStatus", o.PinStatus);
+                            xml.WriteElementString("FileBirthDroid", o.FileBirthDroid);
+                            xml.WriteElementString("FileDroid", o.FileDroid);
+                            xml.WriteElementString("VolumeBirthDroid", o.VolumeBirthDroid);
+                            xml.WriteElementString("VolumeDroid", o.VolumeDroid);
 
 
                             if (o.Arguments?.Length > 0)
                             {
-                                xml?.WriteElementString("Arguments", o.Arguments);
+                                xml.WriteElementString("Arguments", o.Arguments);
                             }
 
-                            xml?.WriteElementString("TargetCreated", o.TargetCreated);
-                            xml?.WriteElementString("TargetModified", o.TargetModified);
-                            xml?.WriteElementString("TargetAccessed", o.TargetAccessed);
-                            xml?.WriteElementString("FileSize", o.FileSize.ToString());
-                            xml?.WriteElementString("RelativePath", o.RelativePath);
-                            xml?.WriteElementString("WorkingDirectory", o.WorkingDirectory);
-                            xml?.WriteElementString("FileAttributes", o.FileAttributes);
-                            xml?.WriteElementString("HeaderFlags", o.HeaderFlags);
-                            xml?.WriteElementString("DriveType", o.DriveType);
-                            xml?.WriteElementString("VolumeSerialNumber", o.VolumeSerialNumber);
-                            xml?.WriteElementString("VolumeLabel", o.VolumeLabel);
-                            xml?.WriteElementString("LocalPath", o.LocalPath);
-                            xml?.WriteElementString("CommonPath", o.CommonPath);
+                            xml.WriteElementString("TargetCreated", o.TargetCreated);
+                            xml.WriteElementString("TargetModified", o.TargetModified);
+                            xml.WriteElementString("TargetAccessed", o.TargetAccessed);
+                            xml.WriteElementString("FileSize", o.FileSize.ToString());
+                            xml.WriteElementString("RelativePath", o.RelativePath);
+                            xml.WriteElementString("WorkingDirectory", o.WorkingDirectory);
+                            xml.WriteElementString("FileAttributes", o.FileAttributes);
+                            xml.WriteElementString("HeaderFlags", o.HeaderFlags);
+                            xml.WriteElementString("DriveType", o.DriveType);
+                            xml.WriteElementString("VolumeSerialNumber", o.VolumeSerialNumber);
+                            xml.WriteElementString("VolumeLabel", o.VolumeLabel);
+                            xml.WriteElementString("LocalPath", o.LocalPath);
+                            xml.WriteElementString("CommonPath", o.CommonPath);
 
 
-                            xml?.WriteElementString("TargetMFTEntryNumber", $"{o.TargetMFTEntryNumber}");
-                            xml?.WriteElementString("TargetMFTSequenceNumber", $"{o.TargetMFTSequenceNumber}");
+                            xml.WriteElementString("TargetMFTEntryNumber", $"{o.TargetMFTEntryNumber}");
+                            xml.WriteElementString("TargetMFTSequenceNumber", $"{o.TargetMFTSequenceNumber}");
 
-                            xml?.WriteElementString("MachineID", o.MachineID);
-                            xml?.WriteElementString("MachineMACAddress", o.MachineMACAddress);
-                            xml?.WriteElementString("TrackerCreatedOn", o.TrackerCreatedOn);
+                            xml.WriteElementString("MachineID", o.MachineID);
+                            xml.WriteElementString("MachineMACAddress", o.MachineMACAddress);
+                            xml.WriteElementString("TrackerCreatedOn", o.TrackerCreatedOn);
 
-                            xml?.WriteElementString("ExtraBlocksPresent", o.ExtraBlocksPresent);
+                            xml.WriteElementString("ExtraBlocksPresent", o.ExtraBlocksPresent);
 
-                            xml?.WriteEndElement();
+                            xml.WriteEndElement();
                         }
 
-                        xml?.WriteEndElement();
+                        xml.WriteEndElement();
                     }
                 }
 
@@ -891,7 +916,7 @@ namespace JLECmd
                 return text;
             }
 
-            var validXmlChars = text.Where(ch => XmlConvert.IsXmlChar(ch)).ToArray();
+            var validXmlChars = text.Where(XmlConvert.IsXmlChar).ToArray();
             return new string(validXmlChars);
         }
 
@@ -907,6 +932,7 @@ namespace JLECmd
             }
             catch (Exception)
             {
+                // ignored
             }
 
             return false;
@@ -2449,9 +2475,9 @@ namespace JLECmd
 
             var vendor = "(Unknown vendor)";
 
-            if (_macList.ContainsKey(mac))
+            if (MacList.ContainsKey(mac))
             {
-                vendor = _macList[mac];
+                vendor = MacList[mac];
             }
 
             return vendor;
@@ -2788,5 +2814,7 @@ namespace JLECmd
         public bool PreciseTimestamps { get; set; }
         public bool WithDirectory { get; set; }
         public bool Debug { get; set; }
+
+        public bool CsvSeparator { get; set; }
     }
 }
