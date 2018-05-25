@@ -95,7 +95,7 @@ namespace JLECmd
             _fluentCommandLineParser.Setup(arg => arg.CsvDirectory)
                 .As("csv")
                 .WithDescription(
-                    "Directory to save CSV (tab separated) formatted results to. Be sure to include the full path in double quotes");
+                    "Directory to save CSV formatted results to. Be sure to include the full path in double quotes");
 
             _fluentCommandLineParser.Setup(arg => arg.xHtmlDirectory)
                 .As("html")
@@ -482,7 +482,7 @@ namespace JLECmd
 
 
                     _logger.Warn(
-                        $"CustomDestinations CSV (tab separated) output will be saved to '{outFile}'");
+                        $"CustomDestinations CSV output will be saved to '{outFile}'");
 
                     try
                     {
@@ -697,7 +697,7 @@ namespace JLECmd
 
 
                     _logger.Warn(
-                        $"AutomaticDestinations CSV (tab separated) output will be saved to '{outFile}'");
+                        $"AutomaticDestinations CSV output will be saved to '{outFile}'");
 
                     try
                     {
