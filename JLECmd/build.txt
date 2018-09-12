@@ -1,4 +1,0 @@
-﻿libz add --libz Other.libz --include *.dll --move
-libz inject-libz -assembly .\JLECmd.exe --libz .\Other.libz --move
-libz instrument --assembly .\JLECmd.exe --libz-resources
-(sign exe)
