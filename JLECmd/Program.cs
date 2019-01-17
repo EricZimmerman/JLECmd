@@ -1348,7 +1348,7 @@ namespace JLECmd
                         var target = GetAbsolutePathFromTargetIDs(f.TargetIDs);
                         if (target.Length == 0)
                         {
-                            target = $"{f.NetworkShareInfo.NetworkShareName}\\\\{f.CommonPath}";
+                            target = $"{f.NetworkShareInfo?.NetworkShareName}\\\\{f.CommonPath}";
                         }
 
                         csOut.TargetIDAbsolutePath = target;
@@ -1702,7 +1702,7 @@ namespace JLECmd
 
                                     if (target.Length == 0)
                                     {
-                                        target = $"{f.NetworkShareInfo.NetworkShareName}\\\\{f.CommonPath}";
+                                        target = $"{f.NetworkShareInfo?.NetworkShareName}\\\\{f.CommonPath}";
                                     }
 
                                     _logger.Info($"  Absolute path: {target}");
