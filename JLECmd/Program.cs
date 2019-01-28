@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Security.Principal;
 using System.Text;
 using System.Xml;
+using Alphaleonis.Win32.Filesystem;
 using Exceptionless;
 using ExtensionBlocks;
 using Fclp;
@@ -18,13 +19,17 @@ using JumpList.Custom;
 using Lnk;
 using Lnk.ExtraData;
 using Lnk.ShellItems;
-using Microsoft.Win32;
 using NLog;
 using NLog.Config;
 using NLog.Targets;
 using ServiceStack;
 using ServiceStack.Text;
 using CsvWriter = CsvHelper.CsvWriter;
+using Directory = Alphaleonis.Win32.Filesystem.Directory;
+using File = Alphaleonis.Win32.Filesystem.File;
+using FileInfo = Alphaleonis.Win32.Filesystem.FileInfo;
+using Path = Alphaleonis.Win32.Filesystem.Path;
+
 
 namespace JLECmd
 {
@@ -316,17 +321,50 @@ namespace JLECmd
 
                 var jumpFiles = new List<string>();
 
+                
 
                 try
                 {
-                    var mask = "*.*Destinations-ms";
-                    if (_fluentCommandLineParser.Object.AllFiles)
-                    {
-                        mask = "*";
-                    }
 
-                    jumpFiles.AddRange(Directory.GetFiles(_fluentCommandLineParser.Object.Directory, mask,
-                        SearchOption.AllDirectories));
+                    var f = new DirectoryEnumerationFilters();
+                    f.InclusionFilter = fsei =>
+                    {
+                        var mask = ".*Destinations-ms".ToUpperInvariant();
+                        if (_fluentCommandLineParser.Object.AllFiles)
+                        {
+                            mask = "*";
+                        }
+
+                        if (mask == "*")
+                        {
+                            return true;
+                        }
+
+                        if (fsei.Extension.ToUpperInvariant() == ".AUTOMATICDESTINATIONS-MS" || fsei.Extension.ToUpperInvariant() == ".CUSTOMDESTINATIONS-MS")
+                        {
+                            return true;
+                        }
+
+                        return false;
+                    };
+
+                    f.RecursionFilter = entryInfo => !entryInfo.IsMountPoint && !entryInfo.IsSymbolicLink;
+
+                    f.ErrorFilter = (errorCode, errorMessage, pathProcessed) => true;
+
+                    var dirEnumOptions =
+                        DirectoryEnumerationOptions.Files | DirectoryEnumerationOptions.Recursive |
+                        DirectoryEnumerationOptions.SkipReparsePoints | DirectoryEnumerationOptions.ContinueOnException |
+                        DirectoryEnumerationOptions.BasicSearch;
+
+                    var files2 =
+                        Directory.EnumerateFileSystemEntries(_fluentCommandLineParser.Object.Directory, dirEnumOptions, f);
+
+
+                  jumpFiles.AddRange(files2);
+
+
+
                 }
                 catch (UnauthorizedAccessException ua)
                 {
