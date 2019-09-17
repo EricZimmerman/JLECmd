@@ -29,6 +29,8 @@ using Directory = Alphaleonis.Win32.Filesystem.Directory;
 using File = Alphaleonis.Win32.Filesystem.File;
 using FileInfo = Alphaleonis.Win32.Filesystem.FileInfo;
 using Path = Alphaleonis.Win32.Filesystem.Path;
+using ShellBag = Lnk.ShellItems.ShellBag;
+using ShellBag0X31 = Lnk.ShellItems.ShellBag0X31;
 
 
 namespace JLECmd
@@ -849,6 +851,7 @@ namespace JLECmd
                         xml.WriteElementString("AppIdDescription", processedFile.AppId.Description);
                         xml.WriteElementString("DestListVersion", processedFile.DestListVersion.ToString());
                         xml.WriteElementString("LastUsedEntryNumber", processedFile.LastUsedEntryNumber.ToString());
+                        
 
                         foreach (var o in records)
                         {
@@ -891,6 +894,8 @@ namespace JLECmd
                             xml.WriteElementString("TargetCreated", o.TargetCreated);
                             xml.WriteElementString("TargetModified", o.TargetModified);
                             xml.WriteElementString("TargetAccessed", o.TargetAccessed);
+                            xml.WriteElementString("InteractionCount", o.InteractionCount);
+                            
                             xml.WriteElementString("FileSize", o.FileSize.ToString());
                             xml.WriteElementString("RelativePath", o.RelativePath);
                             xml.WriteElementString("WorkingDirectory", o.WorkingDirectory);
@@ -1156,6 +1161,7 @@ namespace JLECmd
                             ? string.Empty
                             : destListEntry.Lnk?.Header.TargetModificationDate.ToString(
                                 _fluentCommandLineParser.Object.DateTimeFormat),
+                    InteractionCount = destListEntry.InteractionCount.ToString(),
                     TargetAccessed =
                         destListEntry.Lnk?.Header.TargetLastAccessedDate.Year == 1601
                             ? string.Empty
@@ -1368,6 +1374,7 @@ namespace JLECmd
                             CommonPath = f?.CommonPath,
                             VolumeLabel = f?.VolumeInfo?.VolumeLabel,
                             VolumeSerialNumber = f?.VolumeInfo?.VolumeSerialNumber,
+                            
                             DriveType =
                                 f?.VolumeInfo == null
                                     ? "(None)"
@@ -1620,6 +1627,8 @@ namespace JLECmd
                         _logger.Info($"  Hostname: {autoDestList.Hostname}");
                         _logger.Info(
                             $"  Mac Address: {(autoDestList.MacAddress == "00:00:00:00:00:00" ? string.Empty : autoDestList.MacAddress)}");
+                        _logger.Info(
+                            $"  Interaction count: {autoDestList.InteractionCount:N0}");
 
                         _logger.Error("\r\n--- Lnk information ---\r\n");
 
@@ -1889,7 +1898,7 @@ namespace JLECmd
             _logger.Info($"  File size: {lnk.Header.FileSize:N0}");
             _logger.Info($"  Flags: {lnk.Header.DataFlags}");
             _logger.Info($"  File attributes: {lnk.Header.FileAttributes}");
-
+            
             if (lnk.Header.HotKey.Length > 0)
             {
                 _logger.Info($"  Hot key: {lnk.Header.HotKey}");
@@ -2751,6 +2760,7 @@ namespace JLECmd
         public string Hostname { get; set; }
         public string MacAddress { get; set; }
         public string Path { get; set; }
+        public string InteractionCount { get; set; }
         public string PinStatus { get; set; }
         public string FileBirthDroid { get; set; }
         public string FileDroid { get; set; }
@@ -2770,6 +2780,7 @@ namespace JLECmd
         public string DriveType { get; set; }
         public string VolumeSerialNumber { get; set; }
         public string VolumeLabel { get; set; }
+        
         public string LocalPath { get; set; }
         public string CommonPath { get; set; }
         public string TargetIDAbsolutePath { get; set; }
