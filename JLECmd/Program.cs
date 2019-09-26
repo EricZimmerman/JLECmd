@@ -1550,6 +1550,11 @@ namespace JLECmd
 
         private static string GetAbsolutePathFromTargetIDs(List<ShellBag> ids)
         {
+            if (ids == null)
+            {
+                return $"(No target IDs present)";
+            }
+
             var absPath = string.Empty;
 
             if (ids.Count == 0)
@@ -1663,7 +1668,7 @@ namespace JLECmd
 
 
                         if (!_fluentCommandLineParser.Object.IncludeLnkFullDetail &&
-                            autoDestList.Lnk.TargetIDs.Count > 0)
+                            autoDestList.Lnk?.TargetIDs.Count > 0)
                         {
                             var target = GetAbsolutePathFromTargetIDs(autoDestList.Lnk.TargetIDs);
 
@@ -1674,6 +1679,11 @@ namespace JLECmd
                             }
 
                             _logger.Info($"  Absolute path: {target}");
+                            _logger.Info("");
+                        }
+                        else
+                        {
+                            _logger.Info($"  (lnk file not present)");
                             _logger.Info("");
                         }
 
@@ -1802,6 +1812,11 @@ namespace JLECmd
 
         private static void DumpLnkDetail(LnkFile lnk)
         {
+            if (lnk == null)
+            {
+                _logger.Warn("(lnk file not present)");
+                return;
+            }
             if ((lnk.Header.DataFlags & Header.DataFlag.HasName) == Header.DataFlag.HasName)
             {
                 _logger.Info($"  Name: {lnk.Name}");
@@ -1879,6 +1894,11 @@ namespace JLECmd
 
         private static void DumpLnkFile(LnkFile lnk)
         {
+            if (lnk == null)
+            {
+                _logger.Warn($"(lnk file not present)");
+                return;
+            }
             _logger.Warn("--- Header ---");
 
             var tc1 = lnk.Header.TargetCreationDate.Year == 1601
