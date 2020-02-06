@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -525,7 +526,7 @@ namespace JLECmd
                     try
                     {
                         swCustom = new StreamWriter(outFile);
-                        csvCustom = new CsvWriter(swCustom);
+                        csvCustom = new CsvWriter(swCustom,CultureInfo.InvariantCulture);
                         
                         csvCustom.WriteHeader(typeof(CustomCsvOut));
                         csvCustom.NextRecord();
@@ -741,7 +742,7 @@ namespace JLECmd
                     try
                     {
                         swAuto = new StreamWriter(outFile);
-                        csvAuto = new CsvWriter(swAuto);
+                        csvAuto = new CsvWriter(swAuto,CultureInfo.InvariantCulture);
                 
                         csvAuto.WriteHeader(typeof(AutoCsvOut));
                         csvAuto.NextRecord();
