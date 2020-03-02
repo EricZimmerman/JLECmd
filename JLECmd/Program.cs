@@ -1123,7 +1123,7 @@ namespace JLECmd
                     AppId = auto.AppId.AppId,
                     AppIdDescription = auto.AppId.Description,
                     DestListVersion = auto.DestListVersion.ToString(),
-                    MRU = destListEntry.MRUPosition.ToString("N0"),
+                    MRU = destListEntry.MRUPosition.ToString("F0"),
                     LastUsedEntryNumber = auto.LastUsedEntryNumber.ToString(),
                     EntryNumber = destListEntry.EntryNumber.ToString("X"),
                     CreationTime =
