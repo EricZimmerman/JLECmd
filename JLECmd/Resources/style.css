@@ -46,7 +46,7 @@ rgtColumn {
 		margin: 0;
 	}
 	    
-	SourceCreated, AppId, AppIdDescription, Arguments, SourceModified, SourceAccessed, DestListVersion, LastUsedEntryNumber, EntryName,EntryNumber, CreationTime, LastModified, Hostname, MacAddress, Path, PinStatus, FileBirthDroid, FileDroid, VolumeBirthDroid, VolumeDroid, TargetCreated, TargetModified, TargetAccessed, FileSize, RelativePath, WorkingDirectory, FileAttributes, HeaderFlags, DriveType, DriveSerialNumber, DriveLabel, LocalPath, CommonPath, TargetIDAbsolutePath, TargetMFTEntryNumber, TargetMFTSequenceNumber, MachineID, MachineMACAddress, MACVendor, TrackerCreatedOn, ExtraBlocksPresent {
+	SourceCreated, AppId, AppIdDescription, Arguments, SourceModified, SourceAccessed, DestListVersion, LastUsedEntryNumber, EntryName,EntryNumber, CreationTime, LastModified, Hostname, MacAddress, Path, PinStatus, FileBirthDroid, FileDroid,InteractionCount, VolumeBirthDroid, VolumeDroid, TargetCreated, TargetModified, TargetAccessed, FileSize, RelativePath, WorkingDirectory, FileAttributes, HeaderFlags, DriveType, VolumeSerialNumber, VolumeLabel, LocalPath, CommonPath,NetworkPath, TargetIDAbsolutePath, TargetMFTEntryNumber, TargetMFTSequenceNumber, MachineID, MachineMACAddress, MACVendor, TrackerCreatedOn, ExtraBlocksPresent {
 		display: block;
 		width: auto;
 		color: #043F5F;
@@ -138,6 +138,22 @@ rgtColumn {
 		padding: 2px 10px 0 2px;
 		margin: 2px 0 4px 0;
 	}
+
+	InteractionCount:before {
+		content: "Interaction Count:";
+		display: inline;
+		letter-spacing: 1pt;
+		line-height: 1;
+		word-spacing: 2pt;
+		font-weight: bold;
+		font-size: 12px;
+		font-family: verdana, sans-serif;
+		text-align: right;
+		text-decoration: underline;
+		padding: 2px 10px 0 2px;
+		margin: 2px 0 4px 0;
+	}
+
 	
 	TargetCreated:before {
 		content: "Target Created:";
@@ -555,8 +571,8 @@ rgtColumn {
 		margin: 2px 0 4px 0;
 	}
 	
-	DriveSerialNumber:before {
-		content: "Drive Serial Number:";
+	VolumeSerialNumber:before {
+		content: "Volume Serial Number:";
 		display: inline;
 		letter-spacing: 1pt;
 		line-height: 1;
@@ -570,8 +586,8 @@ rgtColumn {
 		margin: 2px 0 4px 0;
 	}
 	
-	DriveLabel:before {
-		content: "Drive Label:";
+	VolumeLabel:before {
+		content: "Volume Label:";
 		display: inline;
 		letter-spacing: 1pt;
 		line-height: 1;
@@ -617,6 +633,21 @@ rgtColumn {
 		padding: 2px 10px 0 2px;
 		margin: 2px 0 4px 0;
 	}
+
+NetworkPath:before {
+	content: "Common Path:";
+	display: inline;
+	letter-spacing: 1pt;
+	line-height: 1;
+	word-spacing: 2pt;
+	font-weight: bold;
+	font-size: 12px;
+	font-family: verdana, sans-serif;
+	text-align: right;
+	text-decoration: underline;
+	padding: 2px 10px 0 2px;
+	margin: 2px 0 4px 0;
+}
 
     TargetIDAbsolutePath {
 		color: maroon;	
