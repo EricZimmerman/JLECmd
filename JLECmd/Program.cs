@@ -1211,12 +1211,12 @@ namespace JLECmd
                     if (destListEntry.Lnk.NetworkShareInfo != null)
                     {
                         target =
-                            $"{destListEntry.Lnk.NetworkShareInfo.NetworkShareName}\\\\{destListEntry.Lnk.CommonPath}";
+                            $"{destListEntry.Lnk.NetworkShareInfo.NetworkShareName}\\{destListEntry.Lnk.CommonPath}";
                     }
                     else
                     {
                         target =
-                            $"{destListEntry.Lnk.LocalPath}\\\\{destListEntry.Lnk.CommonPath}";
+                            $"{destListEntry.Lnk.LocalPath}\\{destListEntry.Lnk.CommonPath}";
                     }
                 }
 
