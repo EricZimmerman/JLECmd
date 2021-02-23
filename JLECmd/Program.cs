@@ -268,6 +268,8 @@ namespace JLECmd
 
             if (_fluentCommandLineParser.Object.File?.Length > 0)
             {
+                _fluentCommandLineParser.Object.File = Path.GetFullPath(_fluentCommandLineParser.Object.File);
+
                 if (IsAutomaticDestinationFile(_fluentCommandLineParser.Object.File))
                 {
                     try
@@ -288,7 +290,7 @@ namespace JLECmd
                     catch (Exception ex)
                     {
                         _logger.Error(
-                            $"Error getting jump lists. Error: {ex.Message}");
+                            $"Error processing jump list. Error: {ex.Message}");
                         return;
                     }
                 }
@@ -312,7 +314,7 @@ namespace JLECmd
                     catch (Exception ex)
                     {
                         _logger.Error(
-                            $"Error getting jump lists. Error: {ex.Message}");
+                            $"Error processing jump list. Error: {ex.Message}");
                         return;
                     }
                 }
@@ -322,10 +324,10 @@ namespace JLECmd
                 _logger.Info($"Looking for jump list files in '{_fluentCommandLineParser.Object.Directory}'");
                 _logger.Info("");
 
+                _fluentCommandLineParser.Object.Directory = Path.GetFullPath(_fluentCommandLineParser.Object.Directory);
+
                 var jumpFiles = new List<string>();
-
                 
-
                 try
                 {
 
