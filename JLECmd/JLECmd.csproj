@@ -88,12 +88,12 @@
       <Version>2.2.6</Version>
     </PackageReference>
     <PackageReference Include="Costura.Fody">
-      <Version>5.1.0</Version>
+      <Version>5.2.0</Version>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="CsvHelper">
-      <Version>26.0.1</Version>
+      <Version>27.0.4</Version>
     </PackageReference>
     <PackageReference Include="Exceptionless">
       <Version>4.6.2</Version>
@@ -102,18 +102,18 @@
       <Version>1.4.3</Version>
     </PackageReference>
     <PackageReference Include="Fody">
-      <Version>6.4.0</Version>
+      <Version>6.5.1</Version>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="JumpList">
-      <Version>1.2.0.1</Version>
+      <Version>1.2.1.1</Version>
     </PackageReference>
     <PackageReference Include="NLog">
-      <Version>4.7.8</Version>
+      <Version>4.7.10</Version>
     </PackageReference>
     <PackageReference Include="ServiceStack.Text">
-      <Version>5.10.4</Version>
+      <Version>5.11.0</Version>
     </PackageReference>
     <PackageReference Include="System.Buffers">
       <Version>4.5.1</Version>
