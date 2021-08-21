@@ -43,9 +43,13 @@
 Automatic and Custom Destinations jump list parser with Windows 10/11 support.
 
 [Jump lists in depth: Understand the format to better understand what your tools are (or aren't) doing](https://binaryforay.blogspot.com/2016/02/jump-lists-in-depth-understand-format.html)
+
 [Introducing JLECmd!](https://binaryforay.blogspot.com/2016/03/introducing-jlecmd.html)
+
 [PECmd, LECmd, and JLECmd updated!](https://binaryforay.blogspot.com/2016/03/pecmd-lecmd-and-jlecmd-updated.html)
+
 [LECmd and JLECmd updated](https://binaryforay.blogspot.com/2016/04/lecmd-and-jlecmd-updated.html)
+
 [JLECmd v0.9.6.0 released](https://binaryforay.blogspot.com/2016/09/jlecmd-v0960-released.html)
 
 # Download Eric Zimmerman's Tools
