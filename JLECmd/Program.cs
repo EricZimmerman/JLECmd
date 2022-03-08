@@ -1690,7 +1690,7 @@ namespace JLECmd
                     {
                         Console.WriteLine();
                         Log.Warning(
-                            "  There are more items in the Directory ({DirectoryCount:N0}) than are contained in the DestList ({DestListCount:N0}). Use {Switch} to view/export them",autoDest.Directory.Count - 2,autoDest.DestListCount,"--WithDir");
+                            "  There are more items in the Directory ({DirectoryCount:N0}) than are contained in the DestList ({DestListCount:N0}). Use {Switch} to view/export them",autoDest.Directory.Count - 2,autoDest.DestListCount,"--withDir");
                     }
 
                     Console.WriteLine();
