@@ -1163,6 +1163,7 @@ namespace JLECmd
                     SourceAccessed = at.ToString(dt),
                     AppId = auto.AppId.AppId,
                     AppIdDescription = auto.AppId.Description,
+                    HasSps = auto.HasSps,
                     DestListVersion = auto.DestListVersion.ToString(),
                     MRU = destListEntry.MRUPosition.ToString("F0"),
                     LastUsedEntryNumber = auto.LastUsedEntryNumber.ToString(),
@@ -1380,6 +1381,7 @@ namespace JLECmd
                             SourceAccessed = at.ToString(dt),
                             AppId = auto.AppId.AppId,
                             AppIdDescription = auto.AppId.Description,
+                            HasSps = auto.HasSps,
                             DestListVersion = auto.DestListVersion.ToString(),
                             LastUsedEntryNumber = auto.LastUsedEntryNumber.ToString(),
                             EntryNumber = directoryEntry.DirectoryName,
@@ -1633,6 +1635,7 @@ namespace JLECmd
 
                 Log.Debug("Opened {File}", jlFile);
 
+
                 if (q == false)
                 {
                     Log.Information("Source file: {SourceFile}", autoDest.SourceFile);
@@ -1726,6 +1729,16 @@ namespace JLECmd
                         }
 
                         Console.WriteLine();
+
+                        if (autoDestList.Sps != null)
+                        {
+                            Log.Information("   --- Serialized Property Store information ---");
+                            foreach (var property in autoDestList.Sps.PropertyNames)
+                            {
+                                Log.Information("    Property {Name}: {Value}",property.Key,property.Value);
+                            }
+                        }
+                        
                     }
 
                     if (wd)
@@ -1815,6 +1828,13 @@ namespace JLECmd
                 {
                     Log.Warning(
                         "** There are more items in the Directory ({DirectoryCount:N0}) than are contained in the DestList ({DestListCount:N0}). Use {Switch} to view them **", autoDest.Directory.Count - 2, autoDest.DestListCount, "--WithDir");
+                    Console.WriteLine();
+                }
+                
+                if (autoDest.HasSps)
+                {
+                  
+                    Log.Warning("** {Warn} **","JumpList has serialized property store! View its contents via -f for details");
                     Console.WriteLine();
                 }
 
@@ -2810,7 +2830,9 @@ namespace JLECmd
         public string SourceAccessed { get; set; }
         public string AppId { get; set; }
         public string AppIdDescription { get; set; }
-
+        
+        public bool HasSps { get; set; }
+        
         public string DestListVersion { get; set; }
         public string LastUsedEntryNumber { get; set; }
         public string MRU { get; set; }
@@ -2866,6 +2888,8 @@ namespace JLECmd
         public string SourceAccessed { get; set; }
         public string AppId { get; set; }
         public string AppIdDescription { get; set; }
+        
+       
 
         public string EntryName { get; set; }
 
