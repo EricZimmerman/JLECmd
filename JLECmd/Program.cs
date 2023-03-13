@@ -1,4 +1,16 @@
-﻿using System;
+﻿#if !NET6_0
+using Directory = Alphaleonis.Win32.Filesystem.Directory;
+using File = Alphaleonis.Win32.Filesystem.File;
+using FileInfo = Alphaleonis.Win32.Filesystem.FileInfo;
+using Path = Alphaleonis.Win32.Filesystem.Path;
+
+#else
+using Directory = System.IO.Directory;
+using File = System.IO.File;
+using FileInfo = System.IO.FileInfo;
+using Path = System.IO.Path;
+#endif
+using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Help;
@@ -14,7 +26,6 @@ using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
-using Alphaleonis.Win32.Filesystem;
 using Exceptionless;
 using ExtensionBlocks;
 using JLECmd.Properties;
@@ -31,18 +42,6 @@ using ServiceStack.Text;
 using CsvWriter = CsvHelper.CsvWriter;
 using ShellBag = Lnk.ShellItems.ShellBag;
 using ShellBag0X31 = Lnk.ShellItems.ShellBag0X31;
-#if !NET6_0
-using Directory = Alphaleonis.Win32.Filesystem.Directory;
-using File = Alphaleonis.Win32.Filesystem.File;
-using FileInfo = Alphaleonis.Win32.Filesystem.FileInfo;
-using Path = Alphaleonis.Win32.Filesystem.Path;
-
-#else
-using Directory = System.IO.Directory;
-using File = System.IO.File;
-using FileInfo = System.IO.FileInfo;
-using Path = System.IO.Path;
-#endif
 
 
 namespace JLECmd
@@ -391,21 +390,22 @@ namespace JLECmd
 
                     var files2 = Directory.EnumerateFileSystemEntries(d, dirEnumOptions, filters);
 #else
-                        var mask = "*.*Destinations-ms".ToUpperInvariant();
-                        if (all)
-                        {
-                            mask = "*";
-                        }
-                        var enumerationOptions = new EnumerationOptions
-                        {
-                            IgnoreInaccessible = true,
-                            MatchCasing = MatchCasing.CaseInsensitive,
-                            RecurseSubdirectories = true,
-                            AttributesToSkip = 0
-                        };
-                        
-                       var files2 =
-                            Directory.EnumerateFileSystemEntries(d, mask,enumerationOptions);
+                    var mask = "*.*Destinations-ms".ToUpperInvariant();
+                    if (all)
+                    {
+                        mask = "*";
+                    }
+
+                    var enumerationOptions = new EnumerationOptions
+                    {
+                        IgnoreInaccessible = true,
+                        MatchCasing = MatchCasing.CaseInsensitive,
+                        RecurseSubdirectories = true,
+                        AttributesToSkip = 0
+                    };
+
+                    var files2 =
+                        Directory.EnumerateFileSystemEntries(d, mask, enumerationOptions);
 #endif
 
 
@@ -1627,6 +1627,8 @@ namespace JLECmd
             var sw = new Stopwatch();
             sw.Start();
 
+            var distListCountAdjust = 2;
+
             try
             {
                 Log.Debug("Opening {File}", jlFile);
@@ -1652,7 +1654,13 @@ namespace JLECmd
                     Log.Information("  Actual DestList entries:    {DestListCount:N0}", autoDest.DestListCount);
                     Log.Information("  DestList version:           {DestListVersion}", autoDest.DestListVersion);
 
-                    if (autoDest.DestListCount != autoDest.Directory.Count - 2)
+
+                    if (autoDest.DestListPropertyStore != null && autoDest.EmptyDestListPropertyStore == false)
+                    {
+                        distListCountAdjust = 3;
+                    }
+
+                    if (autoDest.DestListCount > 0 && autoDest.DestListCount != autoDest.Directory.Count - distListCountAdjust)
                     {
                         Console.WriteLine();
                         Log.Warning(
@@ -1660,6 +1668,18 @@ namespace JLECmd
                     }
 
                     Console.WriteLine();
+
+                    if (autoDest.DestListPropertyStore != null)
+                    {
+                        Log.Information("   --- DestList Property Store information ---");
+                        foreach (var property in autoDest.DestListPropertyStore.PropertyNames)
+                        {
+                            Log.Information("    Property {Name}: {Value}", property.Key, property.Value);
+                        }
+                    }
+
+                    Console.WriteLine();
+
 
                     Log.Information("--- DestList entries ---");
                     foreach (var autoDestList in autoDest.DestListEntries)
@@ -1728,6 +1748,7 @@ namespace JLECmd
                             Console.WriteLine();
                         }
 
+
                         Console.WriteLine();
 
                         if (autoDestList.Sps != null)
@@ -1735,10 +1756,9 @@ namespace JLECmd
                             Log.Information("   --- Serialized Property Store information ---");
                             foreach (var property in autoDestList.Sps.PropertyNames)
                             {
-                                Log.Information("    Property {Name}: {Value}",property.Key,property.Value);
+                                Log.Information("    Property {Name}: {Value}", property.Key, property.Value);
                             }
                         }
-                        
                     }
 
                     if (wd)
@@ -1824,17 +1844,21 @@ namespace JLECmd
                     Console.WriteLine();
                 }
 
-                if (autoDest.DestListCount != autoDest.Directory.Count - 2)
+                if (autoDest.DestListPropertyStore != null && autoDest.EmptyDestListPropertyStore == false)
                 {
-                    Log.Warning(
-                        "** There are more items in the Directory ({DirectoryCount:N0}) than are contained in the DestList ({DestListCount:N0}). Use {Switch} to view them **", autoDest.Directory.Count - 2, autoDest.DestListCount, "--WithDir");
-                    Console.WriteLine();
+                    distListCountAdjust = 3;
                 }
-                
+
+                if (autoDest.DestListCount > 0 && autoDest.DestListCount != autoDest.Directory.Count - distListCountAdjust)
+                {
+                    Console.WriteLine();
+                    Log.Warning(
+                        "  There are more items in the Directory ({DirectoryCount:N0}) than are contained in the DestList ({DestListCount:N0}). Use {Switch} to view/export them", autoDest.Directory.Count - 2, autoDest.DestListCount, "--withDir");
+                }
+
                 if (autoDest.HasSps)
                 {
-                  
-                    Log.Warning("** {Warn} **","JumpList has serialized property store! View its contents via -f for details");
+                    Log.Warning("** {Warn} **", "JumpList has serialized property store! View its contents via -f for details");
                     Console.WriteLine();
                 }
 
@@ -2780,8 +2804,16 @@ namespace JLECmd
 
             catch (Exception ex)
             {
-                _failedFiles.Add($"{jlFile} ==> ({ex.Message})");
-                Log.Fatal(ex, "Error opening {File}. Message: {Message}", jlFile, ex.Message);
+                if (ex.Message.Equals("Empty custom destinations jump list"))
+                {
+                    Log.Warning("Error processing {File}. Message: {Message}", jlFile, "Empty custom destinations jump list");
+                }
+                else
+                {
+                    _failedFiles.Add($"{jlFile} ==> ({ex.Message})");
+                    Log.Fatal(ex, "Error opening {File}. Message: {Message}", jlFile, ex.Message);
+                }
+
                 Console.WriteLine();
             }
 
@@ -2830,9 +2862,9 @@ namespace JLECmd
         public string SourceAccessed { get; set; }
         public string AppId { get; set; }
         public string AppIdDescription { get; set; }
-        
+
         public bool HasSps { get; set; }
-        
+
         public string DestListVersion { get; set; }
         public string LastUsedEntryNumber { get; set; }
         public string MRU { get; set; }
@@ -2888,8 +2920,7 @@ namespace JLECmd
         public string SourceAccessed { get; set; }
         public string AppId { get; set; }
         public string AppIdDescription { get; set; }
-        
-       
+
 
         public string EntryName { get; set; }
 
