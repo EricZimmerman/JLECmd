@@ -1,15 +1,4 @@
-﻿#if !NET6_0
-using Directory = Alphaleonis.Win32.Filesystem.Directory;
-using File = Alphaleonis.Win32.Filesystem.File;
-using FileInfo = Alphaleonis.Win32.Filesystem.FileInfo;
-using Path = Alphaleonis.Win32.Filesystem.Path;
-#else
-using Directory = System.IO.Directory;
-using File = System.IO.File;
-using FileInfo = System.IO.FileInfo;
-using Path = System.IO.Path;
-#endif
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Help;
@@ -25,6 +14,7 @@ using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
+using Alphaleonis.Win32.Filesystem;
 using Exceptionless;
 using ExtensionBlocks;
 using JLECmd.Properties;
@@ -41,6 +31,17 @@ using ServiceStack.Text;
 using CsvWriter = CsvHelper.CsvWriter;
 using ShellBag = Lnk.ShellItems.ShellBag;
 using ShellBag0X31 = Lnk.ShellItems.ShellBag0X31;
+#if !NET6_0
+using Directory = Alphaleonis.Win32.Filesystem.Directory;
+using File = Alphaleonis.Win32.Filesystem.File;
+using FileInfo = Alphaleonis.Win32.Filesystem.FileInfo;
+using Path = Alphaleonis.Win32.Filesystem.Path;
+#else
+using Directory = System.IO.Directory;
+using File = System.IO.File;
+using FileInfo = System.IO.FileInfo;
+using Path = System.IO.Path;
+#endif
 
 
 namespace JLECmd
