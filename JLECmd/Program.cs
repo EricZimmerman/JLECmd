@@ -3,7 +3,6 @@ using Directory = Alphaleonis.Win32.Filesystem.Directory;
 using File = Alphaleonis.Win32.Filesystem.File;
 using FileInfo = Alphaleonis.Win32.Filesystem.FileInfo;
 using Path = Alphaleonis.Win32.Filesystem.Path;
-
 #else
 using Directory = System.IO.Directory;
 using File = System.IO.File;
@@ -1856,9 +1855,9 @@ namespace JLECmd
                         "  There are more items in the Directory ({DirectoryCount:N0}) than are contained in the DestList ({DestListCount:N0}). Use {Switch} to view/export them", autoDest.Directory.Count - 2, autoDest.DestListCount, "--withDir");
                 }
 
-                if (autoDest.HasSps)
+                if (autoDest.HasSps || autoDest.EmptyDestListPropertyStore == false)
                 {
-                    Log.Warning("** {Warn} **", "JumpList has serialized property store! View its contents via -f for details");
+                    Log.Warning("** {Warn} **", "JumpList has serialized property store(s)! View its contents via -f for details");
                     Console.WriteLine();
                 }
 
