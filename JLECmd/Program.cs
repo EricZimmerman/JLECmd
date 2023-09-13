@@ -178,6 +178,10 @@ namespace JLECmd
                     "--trace",
                     getDefaultValue: () => false,
                     "Show trace information during processing"),
+                new Option<int>(
+                    "--cp",
+                    () => 1252,
+                    "Code page to parse strings"),
             };
 
             _rootCommand.Description = Header + "\r\n\r\n" + Footer;
@@ -189,7 +193,7 @@ namespace JLECmd
             Log.CloseAndFlush();
         }
 
-        private static void DoWork(string f, string d, bool all, string csv, string csvf, string json, string html, bool pretty, bool q, bool ld, bool fd, string appIds, string dumpTo, string dt, bool mp, bool withDir, bool debug, bool trace)
+        private static void DoWork(string f, string d, bool all, string csv, string csvf, string json, string html, bool pretty, bool q, bool ld, bool fd, string appIds, string dumpTo, string dt, bool mp, bool withDir, bool debug, bool trace, int cp)
         {
             var levelSwitch = new LoggingLevelSwitch();
 
@@ -300,7 +304,7 @@ namespace JLECmd
                     try
                     {
                         AutomaticDestination adjl;
-                        adjl = ProcessAutoFile(f, q, dt, fd, ld, withDir);
+                        adjl = ProcessAutoFile(f, q, dt, fd, ld, withDir, cp);
                         if (adjl != null)
                         {
                             _processedAutoFiles.Add(adjl);
@@ -325,7 +329,7 @@ namespace JLECmd
                     try
                     {
                         CustomDestination cdjl;
-                        cdjl = ProcessCustomFile(f, q, dt, ld);
+                        cdjl = ProcessCustomFile(f, q, dt, ld, cp);
                         if (cdjl != null)
                         {
                             _processedCustomFiles.Add(cdjl);
@@ -435,7 +439,7 @@ namespace JLECmd
                     if (IsAutomaticDestinationFile(file))
                     {
                         AutomaticDestination adjl;
-                        adjl = ProcessAutoFile(file, q, dt, fd, ld, withDir);
+                        adjl = ProcessAutoFile(file, q, dt, fd, ld, withDir, cp);
                         if (adjl != null)
                         {
                             _processedAutoFiles.Add(adjl);
@@ -444,7 +448,7 @@ namespace JLECmd
                     else
                     {
                         CustomDestination cdjl;
-                        cdjl = ProcessCustomFile(file, q, dt, ld);
+                        cdjl = ProcessCustomFile(file, q, dt, ld, cp);
                         if (cdjl != null)
                         {
                             _processedCustomFiles.Add(cdjl);
@@ -1616,7 +1620,7 @@ namespace JLECmd
             return absPath;
         }
 
-        private static AutomaticDestination ProcessAutoFile(string jlFile, bool q, string dt, bool fd, bool ld, bool wd)
+        private static AutomaticDestination ProcessAutoFile(string jlFile, bool q, string dt, bool fd, bool ld, bool wd, int codepage=1252)
         {
             if (q == false)
             {
@@ -1633,7 +1637,7 @@ namespace JLECmd
             {
                 Log.Debug("Opening {File}", jlFile);
 
-                var autoDest = JumpList.JumpList.LoadAutoJumplist(jlFile);
+                var autoDest = JumpList.JumpList.LoadAutoJumplist(jlFile, codepage);
 
                 Log.Debug("Opened {File}", jlFile);
 
@@ -2622,7 +2626,7 @@ namespace JLECmd
             return vendor;
         }
 
-        private static CustomDestination ProcessCustomFile(string jlFile, bool q, string dt, bool ld)
+        private static CustomDestination ProcessCustomFile(string jlFile, bool q, string dt, bool ld, int codepage = 1252)
         {
             if (q == false)
             {
@@ -2635,7 +2639,7 @@ namespace JLECmd
 
             try
             {
-                var customDest = JumpList.JumpList.LoadCustomJumplist(jlFile);
+                var customDest = JumpList.JumpList.LoadCustomJumplist(jlFile, codepage);
 
                 if (q == false)
                 {
