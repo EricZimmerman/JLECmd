@@ -31,7 +31,7 @@ using ServiceStack.Text;
 using CsvWriter = CsvHelper.CsvWriter;
 using ShellBag = Lnk.ShellItems.ShellBag;
 using ShellBag0X31 = Lnk.ShellItems.ShellBag0X31;
-#if !NET6_0
+#if !NET6_0_OR_GREATER
 using Directory = Alphaleonis.Win32.Filesystem.Directory;
 using File = Alphaleonis.Win32.Filesystem.File;
 using FileInfo = Alphaleonis.Win32.Filesystem.FileInfo;
@@ -360,7 +360,7 @@ namespace JLECmd
 
                 try
                 {
-#if !NET6_0
+#if !NET6_0_OR_GREATER
                     var filters = new DirectoryEnumerationFilters();
                     filters.InclusionFilter = fsei =>
                     {
@@ -1620,7 +1620,7 @@ namespace JLECmd
             return absPath;
         }
 
-        private static AutomaticDestination ProcessAutoFile(string jlFile, bool q, string dt, bool fd, bool ld, bool wd, int codepage=1252)
+        private static AutomaticDestination ProcessAutoFile(string jlFile, bool q, string dt, bool fd, bool ld, bool wd, int codepage = 1252)
         {
             if (q == false)
             {
