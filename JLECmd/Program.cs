@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Help;
-using System.CommandLine.NamingConventionBinder;
+using System.CommandLine.Invocation;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
@@ -63,19 +63,20 @@ namespace JLECmd
         private static DateTimeOffset ts = DateTimeOffset.UtcNow;
 
         private static string Header =
-            $"JLECmd version {Assembly.GetExecutingAssembly().GetName().Version}" +
+            $"JLECmd version {Assembly.GetExecutingAssembly().GetName().Version.ToString(3)}" +
             "\r\n\r\nAuthor: Eric Zimmerman (saericzimmerman@gmail.com)" +
             "\r\nhttps://github.com/EricZimmerman/JLECmd";
 
-        private static string Footer = @"Examples: JLECmd.exe -f ""C:\Temp\f01b4d95cf55d32a.customDestinations-ms"" --mp" + "\r\n\t " +
-                                       @" JLECmd.exe -f ""C:\Temp\f01b4d95cf55d32a.automaticDestinations-ms"" --json ""D:\jsonOutput"" --pretty" +
-                                       "\r\n\t " +
-                                       @" JLECmd.exe -d ""C:\CustomDestinations"" --csv ""c:\temp"" --html ""c:\temp"" -q" +
-                                       "\r\n\t " +
-                                       @" JLECmd.exe -d ""C:\Users\e\AppData\Roaming\Microsoft\Windows\Recent"" --dt ""ddd yyyy MM dd HH:mm:ss.fff"" " +
-                                       "\r\n\t" +
-                                       "\r\n\t" +
-                                       "  Short options (single letter) are prefixed with a single dash. Long commands are prefixed with two dashes\r\n";
+        private static string Footer =
+            @"Examples: JLECmd.exe -f ""C:\Temp\f01b4d95cf55d32a.customDestinations-ms"" --mp" + "\r\n\t " +
+            @" JLECmd.exe -f ""C:\Temp\f01b4d95cf55d32a.automaticDestinations-ms"" --json ""D:\jsonOutput"" --pretty" +
+            "\r\n\t " +
+            @" JLECmd.exe -d ""C:\CustomDestinations"" --csv ""c:\temp"" --html ""c:\temp"" -q" +
+            "\r\n\t " +
+            @" JLECmd.exe -d ""C:\Users\e\AppData\Roaming\Microsoft\Windows\Recent"" --dt ""ddd yyyy MM dd HH:mm:ss.fff"" " +
+            "\r\n\t" +
+            "\r\n\t" +
+            "  Short options (single letter) are prefixed with a single dash. Long commands are prefixed with two dashes\r\n";
 
         private static readonly string BaseDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
@@ -95,105 +96,172 @@ namespace JLECmd
         {
             ExceptionlessClient.Default.Startup("ZqbYbvr4FIRjkpUrqCLC5N4RfKIuo9YIVmpQuOje");
 
+            var fOpt = new Option<string>("-f")
+            {
+                Description = "File to recursively process. Either this or -d is required"
+            };
+
+            var dOpt = new Option<string>("-d")
+            {
+                Description = "Directory to recursively process. Either this or -f is required"
+            };
+
+            var allOpt = new Option<bool>("--all")
+            {
+                Description =
+                    "Process all files in directory vs. only files matching *.automaticDestinations-ms or *.customDestinations-ms"
+            };
+
+            var csvOpt = new Option<string>(
+                "--csv")
+            {
+                Description =
+                    "Directory to save CSV formatted results to. Be sure to include the full path in double quotes"
+            };
+
+            var csvfOpt = new Option<string>(
+                "--csvf")
+            {
+                Description = "File name to save CSV formatted results to. When present, overrides default name"
+            };
+            var jsonOpt = new Option<string>(
+                "--json")
+            {
+                Description =
+                    "Directory to save JSON formatted results to. Be sure to include the full path in double quotes. Use --pretty for a more human readable layout"
+            };
+
+            var jsonfOpt = new Option<string>(
+                "--jsonf")
+            {
+                Description = "File name to save JSON formatted results to. When present, overrides default name"
+            };
+
+            var htmlOpt = new Option<string>(
+                "--html")
+            {
+                Description =
+                    "Directory to save xhtml formatted results to. Be sure to include the full path in double quotes"
+            };
+
+            var prettyOpt = new Option<bool>("--pretty")
+            {
+                Description = "When exporting to json, use a more human readable layout",
+                DefaultValueFactory = _ => false
+            };
+
+            var qOpt = new Option<bool>("-q")
+            {
+                Description =
+                    "Do not dump full details about each file processed. Speeds up processing when using --json or --csv",
+                DefaultValueFactory = _ => false
+            };
+
+            var ldOpt = new Option<bool>("--ld")
+            {
+                Description = "Include more information about lnk files",
+                DefaultValueFactory = _ => false
+            };
+
+            var fdOpt = new Option<bool>("--fd")
+            {
+                Description =
+                    "Include full information about lnk files (Alternatively, dump lnk files using --dumpTo and process with LECmd)",
+                DefaultValueFactory = _ => false
+            };
+
+            var appIdOpt = new Option<string>(
+                "--appIds")
+            {
+                Description =
+                    "Path to file containing AppIDs and descriptions (appid|description format). New appIds are added to the built-in list, existing appIds will have their descriptions updated",
+            };
+
+            var dumpOpt = new Option<string>(
+                "--dumpTo")
+            {
+                Description = "Directory to save exported lnk files",
+            };
+
+            var dtOpt = new Option<string>(
+                "--dt")
+            {
+                Description =
+                    "The custom date/time format to use when displaying time stamps. See https://goo.gl/CNVq0k for options. Default is: yyyy-MM-dd HH:mm:ss",
+                DefaultValueFactory = _ => "yyyy-MM-dd HH:mm:ss"
+            };
+
+            var mpOpt = new Option<bool>("--mp")
+            {
+                Description = "When true, display higher precision for timestamps",
+                DefaultValueFactory = _ => false
+            };
+
+            var withDirOpt = new Option<bool>("--withDir")
+            {
+                Description = "When true, show contents of Directory not accounted for in DestList entries",
+                DefaultValueFactory = _ => false
+            };
+
+            var cpOpt = new Option<int>("--cp")
+            {
+                Description = "Code page to parse strings",
+                DefaultValueFactory = _ => 1252
+            };
+
+            var debugOpt = new Option<bool>("--debug")
+            {
+                Description = "Show debug information during processing",
+                DefaultValueFactory = _ => false
+            };
+            var traceOpt = new Option<bool>("--trace")
+            {
+                Description = "Show trace information during processing",
+                DefaultValueFactory = _ => false
+            };
+
             _rootCommand = new RootCommand
             {
-                new Option<string>(
-                    "-f",
-                    "File to process. Either this or -d is required"),
-
-                new Option<string>(
-                    "-d",
-                    "Directory to recursively process. Either this or -f is required"),
-
-                new Option<bool>(
-                    "--all",
-                    getDefaultValue: () => false,
-                    "Process all files in directory vs. only files matching *.automaticDestinations-ms or *.customDestinations-ms"),
-
-                new Option<string>(
-                    "--csv",
-                    "Directory to save CSV formatted results to. This or --json required unless --de or --body is specified"),
-
-                new Option<string>(
-                    "--csvf",
-                    "File name to save CSV formatted results to. When present, overrides default name"),
-
-                new Option<string>(
-                    "--json",
-                    "Directory to save json representation to. Use --pretty for a more human readable layout"),
-
-                new Option<string>(
-                    "--html",
-                    "Directory to save xhtml formatted results to. Be sure to include the full path in double quotes"),
-
-                new Option<bool>(
-                    "--pretty",
-                    getDefaultValue: () => false,
-                    "When exporting to json, use a more human readable layout"),
-
-                new Option<bool>(
-                    "-q",
-                    getDefaultValue: () => false,
-                    "Only show the filename being processed vs all output. Useful to speed up exporting to json and/or csv"),
-
-                new Option<bool>(
-                    "--ld",
-                    getDefaultValue: () => false,
-                    "Include more information about lnk files"),
-
-                new Option<bool>(
-                    "--fd",
-                    getDefaultValue: () => false,
-                    "Include full information about lnk files (Alternatively, dump lnk files using --dumpTo and process with LECmd)"),
-
-                new Option<string>(
-                    "--appIds",
-                    "Path to file containing AppIDs and descriptions (appid|description format). New appIds are added to the built-in list, existing appIds will have their descriptions updated"),
-
-                new Option<string>(
-                    "--dumpTo",
-                    "Directory to save exported lnk files"),
-
-                new Option<string>(
-                    "--dt",
-                    getDefaultValue: () => "yyyy-MM-dd HH:mm:ss",
-                    "The custom date/time format to use when displaying timestamps. See https://goo.gl/CNVq0k for options. Default is: yyyy-MM-dd HH:mm:ss"),
-
-                new Option<bool>(
-                    "--mp",
-                    getDefaultValue: () => false,
-                    "Display higher precision for timestamps"),
-
-                new Option<bool>(
-                    "--withDir",
-                    getDefaultValue: () => false,
-                    "When true, show contents of Directory not accounted for in DestList entries"),
-
-                new Option<bool>(
-                    "--debug",
-                    getDefaultValue: () => false,
-                    "Show debug information during processing"),
-
-                new Option<bool>(
-                    "--trace",
-                    getDefaultValue: () => false,
-                    "Show trace information during processing"),
-                new Option<int>(
-                    "--cp",
-                    () => 1252,
-                    "Code page to parse strings"),
+                fOpt,
+                dOpt,
+                allOpt,
+                csvOpt,
+                csvfOpt,
+                jsonOpt,
+                jsonfOpt,
+                htmlOpt,
+                prettyOpt,
+                qOpt,
+                ldOpt,
+                fdOpt,
+                appIdOpt,
+                dumpOpt,
+                dtOpt,
+                mpOpt,
+                withDirOpt,
+                cpOpt,
+                debugOpt,
+                traceOpt
             };
 
             _rootCommand.Description = Header + "\r\n\r\n" + Footer;
 
-            _rootCommand.Handler = CommandHandler.Create(DoWork);
+            _rootCommand.SetAction(result => DoWork(result.GetValue(fOpt), result.GetValue(dOpt),
+                result.GetValue(allOpt),
+                result.GetValue(csvOpt), result.GetValue(csvfOpt), result.GetValue(jsonOpt), result.GetValue(jsonfOpt),
+                result.GetValue(htmlOpt), result.GetValue(prettyOpt), result.GetValue(qOpt), result.GetValue(ldOpt),
+                result.GetValue(fdOpt), result.GetValue(appIdOpt), result.GetValue(dumpOpt), result.GetValue(dtOpt),
+                result.GetValue(mpOpt), result.GetValue(withDirOpt), result.GetValue(debugOpt),
+                result.GetValue(traceOpt), result.GetValue(cpOpt)));
 
-            await _rootCommand.InvokeAsync(args);
+            var foo = _rootCommand.Parse(args).InvokeAsync();
 
             Log.CloseAndFlush();
         }
 
-        private static void DoWork(string f, string d, bool all, string csv, string csvf, string json, string html, bool pretty, bool q, bool ld, bool fd, string appIds, string dumpTo, string dt, bool mp, bool withDir, bool debug, bool trace, int cp)
+        private static void DoWork(string f, string d, bool all, string csv, string csvf, string json, string jsonf,
+            string html, bool pretty, bool q, bool ld, bool fd, string appIds, string dumpTo, string dt, bool mp,
+            bool withDir, bool debug, bool trace, int cp)
         {
             var levelSwitch = new LoggingLevelSwitch();
 
@@ -230,12 +298,10 @@ namespace JLECmd
 
             if (f.IsNullOrEmpty() && d.IsNullOrEmpty())
             {
-                var helpBld = new HelpBuilder(LocalizationResources.Instance, Console.WindowWidth);
-                var hc = new HelpContext(helpBld, _rootCommand, Console.Out);
+                var aaa = new CustomHelpAction(new HelpAction());
+                aaa.Invoke(_rootCommand.Parse("Either -f or -d is required. Exiting"));
 
-                helpBld.Write(hc);
 
-                Log.Warning("Either -f or -d is required. Exiting");
                 Console.WriteLine();
                 return;
             }
@@ -313,7 +379,8 @@ namespace JLECmd
                     catch (UnauthorizedAccessException ua)
                     {
                         Log.Error(ua,
-                            "Unable to access {F}. Are you running as an administrator? Error: {Message}", f, ua.Message);
+                            "Unable to access {F}. Are you running as an administrator? Error: {Message}", f,
+                            ua.Message);
                         Console.WriteLine();
                         return;
                     }
@@ -338,7 +405,8 @@ namespace JLECmd
                     catch (UnauthorizedAccessException ua)
                     {
                         Log.Error(ua,
-                            "Unable to access {F}. Are you running as an administrator? Error: {Message}", f, ua.Message);
+                            "Unable to access {F}. Are you running as an administrator? Error: {Message}", f,
+                            ua.Message);
                         return;
                     }
                     catch (Exception ex)
@@ -464,7 +532,8 @@ namespace JLECmd
                 }
 
                 Log.Information(
-                    "Processed {ProcessedCount:N0} out of {Count:N0} files in {TotalSeconds:N4} seconds", jumpFiles.Count - _failedFiles.Count, jumpFiles.Count, sw.Elapsed.TotalSeconds);
+                    "Processed {ProcessedCount:N0} out of {Count:N0} files in {TotalSeconds:N4} seconds",
+                    jumpFiles.Count - _failedFiles.Count, jumpFiles.Count, sw.Elapsed.TotalSeconds);
                 if (_failedFiles.Count > 0)
                 {
                     Console.WriteLine();
@@ -529,16 +598,17 @@ namespace JLECmd
 
             if (_processedAutoFiles.Count > 0)
             {
-                ExportAuto(csv, csvf, json, html, pretty, dt, debug, withDir);
+                ExportAuto(csv, csvf, json, jsonf, html, pretty, dt, debug, withDir);
             }
 
             if (_processedCustomFiles.Count > 0)
             {
-                ExportCustom(csv, csvf, json, html, pretty, dt);
+                ExportCustom(csv, csvf, json, jsonf, html, pretty, dt);
             }
         }
 
-        private static void ExportCustom(string csv, string csvf, string json, string html, bool pretty, string dt)
+        private static void ExportCustom(string csv, string csvf, string json, string jsonf, string html, bool pretty,
+            string dt)
         {
             Console.WriteLine();
 
@@ -649,7 +719,7 @@ namespace JLECmd
                     if (json?.Length > 0)
                     {
                         SaveJsonCustom(processedFile, pretty,
-                            json);
+                            json, jsonf);
                     }
 
 
@@ -662,7 +732,8 @@ namespace JLECmd
                     catch (Exception ex)
                     {
                         Log.Error(ex,
-                            "Error writing record for {SourceFile} to {Csv}. Error: {Message}", processedFile.SourceFile, csv, ex.Message);
+                            "Error writing record for {SourceFile} to {Csv}. Error: {Message}",
+                            processedFile.SourceFile, csv, ex.Message);
                     }
 
 
@@ -758,7 +829,8 @@ namespace JLECmd
             }
         }
 
-        private static void ExportAuto(string csv, string csvf, string json, string html, bool pretty, string dt, bool debug, bool wd)
+        private static void ExportAuto(string csv, string csvf, string json, string jsonf, string html, bool pretty,
+            string dt, bool debug, bool wd)
         {
             Console.WriteLine();
 
@@ -799,7 +871,8 @@ namespace JLECmd
                     catch (Exception ex)
                     {
                         Log.Error(ex,
-                            "Unable to write to {Csv}. Automatic CSV export canceled. Error: {Message}", csv, ex.Message);
+                            "Unable to write to {Csv}. Automatic CSV export canceled. Error: {Message}", csv,
+                            ex.Message);
                     }
                 }
 
@@ -865,7 +938,7 @@ namespace JLECmd
                     if (json?.Length > 0)
                     {
                         SaveJsonAuto(processedFile, pretty,
-                            json);
+                            json, jsonf);
                     }
 
                     var records = GetAutoCsvFormat(processedFile, debug, dt, wd);
@@ -877,7 +950,8 @@ namespace JLECmd
                     catch (Exception ex)
                     {
                         Log.Error(ex,
-                            "Error writing record for {SourceFile} to {Csv}. Error: {Message}", processedFile.SourceFile, csv, ex.Message);
+                            "Error writing record for {SourceFile} to {Csv}. Error: {Message}",
+                            processedFile.SourceFile, csv, ex.Message);
                     }
 
                     var fs = new FileInfo(processedFile.SourceFile);
@@ -1307,8 +1381,8 @@ namespace JLECmd
                 csOut.ExtraBlocksPresent = ebPresent;
 
                 var tnb =
-                    destListEntry.Lnk.ExtraBlocks.SingleOrDefault(
-                        t => t.GetType().Name.ToUpper() == "TRACKERDATABASEBLOCK");
+                    destListEntry.Lnk.ExtraBlocks.SingleOrDefault(t =>
+                        t.GetType().Name.ToUpper() == "TRACKERDATABASEBLOCK");
 
                 if (tnb != null)
                 {
@@ -1365,8 +1439,7 @@ namespace JLECmd
                         continue;
                     }
 
-                    if (auto.DestListEntries.Any(
-                            t => t.EntryNumber.ToString("X") == directoryEntry.DirectoryName))
+                    if (auto.DestListEntries.Any(t => t.EntryNumber.ToString("X") == directoryEntry.DirectoryName))
                     {
                         continue;
                     }
@@ -1473,8 +1546,7 @@ namespace JLECmd
                         csOut.ExtraBlocksPresent = ebPresent;
 
                         var tnb =
-                            f.ExtraBlocks.SingleOrDefault(
-                                t => t.GetType().Name.ToUpper() == "TRACKERDATABASEBLOCK");
+                            f.ExtraBlocks.SingleOrDefault(t => t.GetType().Name.ToUpper() == "TRACKERDATABASEBLOCK");
 
                         if (tnb != null)
                         {
@@ -1545,7 +1617,7 @@ namespace JLECmd
             }
         }
 
-        private static void SaveJsonCustom(CustomDestination cust, bool pretty, string outDir)
+        private static void SaveJsonCustom(CustomDestination cust, bool pretty, string outDir, string jsonf)
         {
             try
             {
@@ -1558,6 +1630,14 @@ namespace JLECmd
                     $"{ts:yyyyMMddHHmmss}_{Path.GetFileName(cust.SourceFile)}.json";
                 var outFile = Path.Combine(outDir, outName);
 
+                if (jsonf.IsNullOrEmpty() == false)
+                {
+                    outName =
+                        $"{Path.GetFileNameWithoutExtension(jsonf)}_CustomDestinations{Path.GetExtension(jsonf)}";
+                }
+
+                outFile = Path.Combine(outDir, outName);
+
                 DumpToJsonCustom(cust, pretty, outFile);
             }
             catch (Exception ex)
@@ -1566,7 +1646,7 @@ namespace JLECmd
             }
         }
 
-        private static void SaveJsonAuto(AutomaticDestination auto, bool pretty, string outDir)
+        private static void SaveJsonAuto(AutomaticDestination auto, bool pretty, string outDir, string jsonf)
         {
             try
             {
@@ -1578,6 +1658,14 @@ namespace JLECmd
                 var outName =
                     $"{ts:yyyyMMddHHmmss}_{Path.GetFileName(auto.SourceFile)}.json";
                 var outFile = Path.Combine(outDir, outName);
+
+                if (jsonf.IsNullOrEmpty() == false)
+                {
+                    outName =
+                        $"{Path.GetFileNameWithoutExtension(jsonf)}_AutomaticDestinations{Path.GetExtension(jsonf)}";
+                }
+
+                outFile = Path.Combine(outDir, outName);
 
                 DumpToJsonAuto(auto, pretty, outFile);
             }
@@ -1620,7 +1708,8 @@ namespace JLECmd
             return absPath;
         }
 
-        private static AutomaticDestination ProcessAutoFile(string jlFile, bool q, string dt, bool fd, bool ld, bool wd, int codepage = 1252)
+        private static AutomaticDestination ProcessAutoFile(string jlFile, bool q, string dt, bool fd, bool ld, bool wd,
+            int codepage = 1252)
         {
             if (q == false)
             {
@@ -1664,11 +1753,13 @@ namespace JLECmd
                         distListCountAdjust = 3;
                     }
 
-                    if (autoDest.DestListCount > 0 && autoDest.DestListCount != autoDest.Directory.Count - distListCountAdjust)
+                    if (autoDest.DestListCount > 0 &&
+                        autoDest.DestListCount != autoDest.Directory.Count - distListCountAdjust)
                     {
                         Console.WriteLine();
                         Log.Warning(
-                            "  There are more items in the Directory ({DirectoryCount:N0}) than are contained in the DestList ({DestListCount:N0}). Use {Switch} to view/export them", autoDest.Directory.Count - 2, autoDest.DestListCount, "--withDir");
+                            "  There are more items in the Directory ({DirectoryCount:N0}) than are contained in the DestList ({DestListCount:N0}). Use {Switch} to view/export them",
+                            autoDest.Directory.Count - 2, autoDest.DestListCount, "--withDir");
                     }
 
                     Console.WriteLine();
@@ -1698,7 +1789,8 @@ namespace JLECmd
                             "  Last modified: {LastModified}", autoDestList.LastModified);
                         Log.Information("  Hostname: {Hostname}", autoDestList.Hostname);
                         Log.Information(
-                            "  Mac Address: {Mac}", (autoDestList.MacAddress == "00:00:00:00:00:00" ? string.Empty : autoDestList.MacAddress));
+                            "  Mac Address: {Mac}",
+                            (autoDestList.MacAddress == "00:00:00:00:00:00" ? string.Empty : autoDestList.MacAddress));
                         Log.Information(
                             "  Interaction count: {InteractionCount:N0}", autoDestList.InteractionCount);
 
@@ -1777,8 +1869,8 @@ namespace JLECmd
                                 continue;
                             }
 
-                            if (autoDest.DestListEntries.Any(
-                                    t => t.EntryNumber.ToString("X") == directoryEntry.DirectoryName))
+                            if (autoDest.DestListEntries.Any(t =>
+                                    t.EntryNumber.ToString("X") == directoryEntry.DirectoryName))
                             {
                                 continue;
                             }
@@ -1835,7 +1927,8 @@ namespace JLECmd
                             }
                             else
                             {
-                                Log.Debug("  No lnk file found for directory entry {DirectoryName}", directoryEntry.DirectoryName);
+                                Log.Debug("  No lnk file found for directory entry {DirectoryName}",
+                                    directoryEntry.DirectoryName);
                             }
                         }
                     }
@@ -1853,21 +1946,25 @@ namespace JLECmd
                     distListCountAdjust = 3;
                 }
 
-                if (autoDest.DestListCount > 0 && autoDest.DestListCount != autoDest.Directory.Count - distListCountAdjust)
+                if (autoDest.DestListCount > 0 &&
+                    autoDest.DestListCount != autoDest.Directory.Count - distListCountAdjust)
                 {
                     Console.WriteLine();
                     Log.Warning(
-                        "  There are more items in the Directory ({DirectoryCount:N0}) than are contained in the DestList ({DestListCount:N0}). Use {Switch} to view/export them", autoDest.Directory.Count - 2, autoDest.DestListCount, "--withDir");
+                        "  There are more items in the Directory ({DirectoryCount:N0}) than are contained in the DestList ({DestListCount:N0}). Use {Switch} to view/export them",
+                        autoDest.Directory.Count - 2, autoDest.DestListCount, "--withDir");
                 }
 
                 if (autoDest.HasSps || autoDest.EmptyDestListPropertyStore == false)
                 {
-                    Log.Warning("** {Warn} **", "JumpList has serialized property store(s)! View its contents via -f for details");
+                    Log.Warning("** {Warn} **",
+                        "JumpList has serialized property store(s)! View its contents via -f for details");
                     Console.WriteLine();
                 }
 
                 Log.Information(
-                    "---------- Processed {SourceFile} in {TotalSeconds:N8} seconds ----------", autoDest.SourceFile, sw.Elapsed.TotalSeconds);
+                    "---------- Processed {SourceFile} in {TotalSeconds:N8} seconds ----------", autoDest.SourceFile,
+                    sw.Elapsed.TotalSeconds);
 
                 if (q == false)
                 {
@@ -1947,13 +2044,16 @@ namespace JLECmd
 
                     if (lnk.NetworkShareInfo.DeviceName.Length > 0)
                     {
-                        Log.Information("    Device name: {NetworkShareInfoDeviceName}", lnk.NetworkShareInfo.DeviceName);
+                        Log.Information("    Device name: {NetworkShareInfoDeviceName}",
+                            lnk.NetworkShareInfo.DeviceName);
                     }
 
-                    Log.Information("    Share name: {NetworkShareInfoNetworkShareName}", lnk.NetworkShareInfo.NetworkShareName);
+                    Log.Information("    Share name: {NetworkShareInfoNetworkShareName}",
+                        lnk.NetworkShareInfo.NetworkShareName);
 
                     Log.Information(
-                        "    Provider type: {NetworkShareInfoNetworkProviderType}", lnk.NetworkShareInfo.NetworkProviderType);
+                        "    Provider type: {NetworkShareInfoNetworkProviderType}",
+                        lnk.NetworkShareInfo.NetworkProviderType);
                     Log.Information("    Share flags: {NetworkShareInfoShareFlags}", lnk.NetworkShareInfo.ShareFlags);
                     Console.WriteLine();
                 }
@@ -2006,7 +2106,8 @@ namespace JLECmd
 
             Log.Information("  Icon index: {IconIndex}", lnk.Header.IconIndex);
             Log.Information(
-                "  Show window: {ShowWindow} ({Desc})", lnk.Header.ShowWindow, GetDescriptionFromEnumValue(lnk.Header.ShowWindow));
+                "  Show window: {ShowWindow} ({Desc})", lnk.Header.ShowWindow,
+                GetDescriptionFromEnumValue(lnk.Header.ShowWindow));
 
             Console.WriteLine();
 
@@ -2067,7 +2168,8 @@ namespace JLECmd
 
                     Log.Information("    Share name: {NetworkShareName}", lnk.NetworkShareInfo.NetworkShareName);
 
-                    Log.Information("    Provider type: {NetworkProviderType}", lnk.NetworkShareInfo.NetworkProviderType);
+                    Log.Information("    Provider type: {NetworkProviderType}",
+                        lnk.NetworkShareInfo.NetworkProviderType);
                     Log.Information("    Share flags: {ShareFlags}", lnk.NetworkShareInfo.ShareFlags);
                     Console.WriteLine();
                 }
@@ -2134,7 +2236,8 @@ namespace JLECmd
                                 foreach (var extensionBlock in b32.ExtensionBlocks)
                                 {
                                     Log.Information(
-                                        "    --------- Block {ExtensionNumber32:N0} ({Name}) ---------", extensionNumber32, extensionBlock.GetType().Name);
+                                        "    --------- Block {ExtensionNumber32:N0} ({Name}) ---------",
+                                        extensionNumber32, extensionBlock.GetType().Name);
                                     if (extensionBlock is Beef0004)
                                     {
                                         var b4 = extensionBlock as Beef0004;
@@ -2168,14 +2271,17 @@ namespace JLECmd
                                         if (b4.MFTInformation.MFTEntryNumber > 0)
                                         {
                                             Log.Information(
-                                                "    MFT entry/sequence #: {MftEntryNumber}/{MftSequenceNumber} (0x{MftEntryNumber2:X}/0x{MftSequenceNumber2:X})", b4.MFTInformation.MFTEntryNumber, b4.MFTInformation.MFTSequenceNumber, b4.MFTInformation.MFTEntryNumber, b4.MFTInformation.MFTSequenceNumber);
+                                                "    MFT entry/sequence #: {MftEntryNumber}/{MftSequenceNumber} (0x{MftEntryNumber2:X}/0x{MftSequenceNumber2:X})",
+                                                b4.MFTInformation.MFTEntryNumber, b4.MFTInformation.MFTSequenceNumber,
+                                                b4.MFTInformation.MFTEntryNumber, b4.MFTInformation.MFTSequenceNumber);
                                         }
                                     }
                                     else if (extensionBlock is Beef0025)
                                     {
                                         var b25 = extensionBlock as Beef0025;
                                         Log.Information(
-                                            "    Filetime 1: {FileTime1}, Filetime 2: {FileTime2}", b25.FileTime1.Value, b25.FileTime2.Value);
+                                            "    Filetime 1: {FileTime1}, Filetime 2: {FileTime2}", b25.FileTime1.Value,
+                                            b25.FileTime2.Value);
                                     }
                                     else if (extensionBlock is Beef0003)
                                     {
@@ -2185,7 +2291,8 @@ namespace JLECmd
                                     else if (extensionBlock is Beef001a)
                                     {
                                         var b3 = extensionBlock as Beef001a;
-                                        Log.Information("    File document type: {FileDocumentTypeString}", b3.FileDocumentTypeString);
+                                        Log.Information("    File document type: {FileDocumentTypeString}",
+                                            b3.FileDocumentTypeString);
                                     }
                                     else
                                     {
@@ -2221,7 +2328,8 @@ namespace JLECmd
                                 foreach (var extensionBlock in b3x.ExtensionBlocks)
                                 {
                                     Log.Information(
-                                        "    --------- Block {ExtensionNumber:N0} ({Name}) ---------", extensionNumber, extensionBlock.GetType().Name);
+                                        "    --------- Block {ExtensionNumber:N0} ({Name}) ---------", extensionNumber,
+                                        extensionBlock.GetType().Name);
                                     if (extensionBlock is Beef0004)
                                     {
                                         var b4 = extensionBlock as Beef0004;
@@ -2254,14 +2362,18 @@ namespace JLECmd
 
                                         if (b4.MFTInformation.MFTEntryNumber > 0)
                                         {
-                                            Log.Information("    MFT entry/sequence #: {MftEntryNumber}/{MftSequenceNumber} (0x{MftEntryNumber2:X}/0x{MftSequenceNumber2:X})", b4.MFTInformation.MFTEntryNumber, b4.MFTInformation.MFTSequenceNumber, b4.MFTInformation.MFTEntryNumber, b4.MFTInformation.MFTSequenceNumber);
+                                            Log.Information(
+                                                "    MFT entry/sequence #: {MftEntryNumber}/{MftSequenceNumber} (0x{MftEntryNumber2:X}/0x{MftSequenceNumber2:X})",
+                                                b4.MFTInformation.MFTEntryNumber, b4.MFTInformation.MFTSequenceNumber,
+                                                b4.MFTInformation.MFTEntryNumber, b4.MFTInformation.MFTSequenceNumber);
                                         }
                                     }
                                     else if (extensionBlock is Beef0025)
                                     {
                                         var b25 = extensionBlock as Beef0025;
                                         Log.Information(
-                                            "    Filetime 1: {FileTime1}, Filetime 2: {FileTime2}", b25.FileTime1.Value, b25.FileTime2.Value);
+                                            "    Filetime 1: {FileTime1}, Filetime 2: {FileTime2}", b25.FileTime1.Value,
+                                            b25.FileTime2.Value);
                                     }
                                     else if (extensionBlock is Beef0003)
                                     {
@@ -2271,7 +2383,8 @@ namespace JLECmd
                                     else if (extensionBlock is Beef001a)
                                     {
                                         var b3 = extensionBlock as Beef001a;
-                                        Log.Information("    File document type: {FileDocumentTypeString}", b3.FileDocumentTypeString);
+                                        Log.Information("    File document type: {FileDocumentTypeString}",
+                                            b3.FileDocumentTypeString);
                                     }
                                     else
                                     {
@@ -2303,7 +2416,8 @@ namespace JLECmd
                                         $"{Utils.GetDescriptionFromGuidAndKey(prop.GUID, int.Parse(propertyName.Key))}"
                                             .PadRight(35);
 
-                                    Log.Information("     {Prefix} {Suffix} ==> {PropertyName}", prefix, suffix, propertyName.Value);
+                                    Log.Information("     {Prefix} {Suffix} ==> {PropertyName}", prefix, suffix,
+                                        propertyName.Value);
                                 }
 
                                 if (propCount == 0)
@@ -2341,7 +2455,8 @@ namespace JLECmd
                                         $"{Utils.GetDescriptionFromGuidAndKey(prop.GUID, int.Parse(propertyName.Key))}"
                                             .PadRight(35);
 
-                                    Log.Information("     {Prefix} {Suffix} ==> {PropertyName}", prefix, suffix, propertyName.Value);
+                                    Log.Information("     {Prefix} {Suffix} ==> {PropertyName}", prefix, suffix,
+                                        propertyName.Value);
                                 }
 
                                 if (propCount == 0)
@@ -2366,7 +2481,9 @@ namespace JLECmd
                             var b71 = shellBag as ShellBag0X71;
                             if (b71.PropertyStore?.Sheets.Count > 0)
                             {
-                                Log.Warning("Property stores found! Please email lnk file to {Email} so support can be added!!", "saericzimmerman@gmail.com");
+                                Log.Warning(
+                                    "Property stores found! Please email lnk file to {Email} so support can be added!!",
+                                    "saericzimmerman@gmail.com");
                             }
 
                             break;
@@ -2391,7 +2508,8 @@ namespace JLECmd
                                 foreach (var extensionBlock in b74.ExtensionBlocks)
                                 {
                                     Log.Information(
-                                        "    --------- Block {ExtensionNumber74:N0} ({Name}) ---------", extensionNumber74, extensionBlock.GetType().Name);
+                                        "    --------- Block {ExtensionNumber74:N0} ({Name}) ---------",
+                                        extensionNumber74, extensionBlock.GetType().Name);
                                     if (extensionBlock is Beef0004)
                                     {
                                         var b4 = extensionBlock as Beef0004;
@@ -2424,14 +2542,18 @@ namespace JLECmd
 
                                         if (b4.MFTInformation.MFTEntryNumber > 0)
                                         {
-                                            Log.Information("    MFT entry/sequence #: {MftEntryNumber}/{MftSequenceNumber} (0x{MftEntryNumber2:X}/0x{MftSequenceNumber2:X})", b4.MFTInformation.MFTEntryNumber, b4.MFTInformation.MFTSequenceNumber, b4.MFTInformation.MFTEntryNumber, b4.MFTInformation.MFTSequenceNumber);
+                                            Log.Information(
+                                                "    MFT entry/sequence #: {MftEntryNumber}/{MftSequenceNumber} (0x{MftEntryNumber2:X}/0x{MftSequenceNumber2:X})",
+                                                b4.MFTInformation.MFTEntryNumber, b4.MFTInformation.MFTSequenceNumber,
+                                                b4.MFTInformation.MFTEntryNumber, b4.MFTInformation.MFTSequenceNumber);
                                         }
                                     }
                                     else if (extensionBlock is Beef0025)
                                     {
                                         var b25 = extensionBlock as Beef0025;
                                         Log.Information(
-                                            "    Filetime 1: {FileTime1}, Filetime 2: {FileTime2}", b25.FileTime1.Value, b25.FileTime2.Value);
+                                            "    Filetime 1: {FileTime1}, Filetime 2: {FileTime2}", b25.FileTime1.Value,
+                                            b25.FileTime2.Value);
                                     }
                                     else if (extensionBlock is Beef0003)
                                     {
@@ -2441,7 +2563,8 @@ namespace JLECmd
                                     else if (extensionBlock is Beef001a)
                                     {
                                         var b3 = extensionBlock as Beef001a;
-                                        Log.Information("    File document type: {FileDocumentTypeString}", b3.FileDocumentTypeString);
+                                        Log.Information("    File document type: {FileDocumentTypeString}",
+                                            b3.FileDocumentTypeString);
                                     }
                                     else
                                     {
@@ -2458,7 +2581,8 @@ namespace JLECmd
                         case "SHELLBAGZIPCONTENTS":
                             break;
                         default:
-                            Log.Warning(">> UNMAPPED Type! Please email lnk file to {Email} so support can be added!", "saericzimmerman@gmail.com");
+                            Log.Warning(">> UNMAPPED Type! Please email lnk file to {Email} so support can be added!",
+                                "saericzimmerman@gmail.com");
                             Log.Warning(">>{ShellBag}", shellBag);
                             break;
                     }
@@ -2486,10 +2610,13 @@ namespace JLECmd
                             Log.Information("   Fill Attributes: {FillAttributes}", cdb.FillAttributes);
                             Log.Information("   Popup Attributes: {PopupFillAttributes}", cdb.PopupFillAttributes);
                             Log.Information(
-                                "   Buffer Size (Width x Height): {ScreenWidthBufferSize} x {cdb.ScreenHeightBufferSize}", cdb.ScreenWidthBufferSize, cdb.ScreenHeightBufferSize);
+                                "   Buffer Size (Width x Height): {ScreenWidthBufferSize} x {cdb.ScreenHeightBufferSize}",
+                                cdb.ScreenWidthBufferSize, cdb.ScreenHeightBufferSize);
                             Log.Information(
-                                "   Window Size (Width x Height): {WindowWidth} x {cdb.WindowHeight}", cdb.WindowWidth, cdb.WindowHeight);
-                            Log.Information("   Origin (X/Y): {WindowOriginX}/{cdb.WindowOriginY}", cdb.WindowOriginX, cdb.WindowOriginY);
+                                "   Window Size (Width x Height): {WindowWidth} x {cdb.WindowHeight}", cdb.WindowWidth,
+                                cdb.WindowHeight);
+                            Log.Information("   Origin (X/Y): {WindowOriginX}/{cdb.WindowOriginY}", cdb.WindowOriginX,
+                                cdb.WindowOriginY);
                             Log.Information("   Font Size: {FontSize}", cdb.FontSize);
                             Log.Information("   Is Bold: {IsBold}", cdb.IsBold);
                             Log.Information("   Face Name: {FaceName}", cdb.FaceName);
@@ -2500,7 +2627,8 @@ namespace JLECmd
                             Log.Information("   Is Auto Positioned: {IsAutoPositioned}", cdb.IsAutoPositioned);
                             Log.Information("   History Buffer Size: {HistoryBufferSize}", cdb.HistoryBufferSize);
                             Log.Information("   History Buffer Count: {HistoryBufferCount}", cdb.HistoryBufferCount);
-                            Log.Information("   History Duplicates Allowed: {HistoryDuplicatesAllowed}", cdb.HistoryDuplicatesAllowed);
+                            Log.Information("   History Duplicates Allowed: {HistoryDuplicatesAllowed}",
+                                cdb.HistoryDuplicatesAllowed);
                             Console.WriteLine();
                             break;
                         case "ConsoleFEDataBlock":
@@ -2512,13 +2640,15 @@ namespace JLECmd
                         case "DarwinDataBlock":
                             var ddb = extraDataBase as DarwinDataBlock;
                             Log.Information(">> Darwin data block");
-                            Log.Information("   Application ID: {ApplicationIdentifierUnicode}", ddb.ApplicationIdentifierUnicode);
+                            Log.Information("   Application ID: {ApplicationIdentifierUnicode}",
+                                ddb.ApplicationIdentifierUnicode);
                             Console.WriteLine();
                             break;
                         case "EnvironmentVariableDataBlock":
                             var evdb = extraDataBase as EnvironmentVariableDataBlock;
                             Log.Information(">> Environment variable data block");
-                            Log.Information("   Environment variables: {EnvironmentVariablesUnicode}", evdb.EnvironmentVariablesUnicode);
+                            Log.Information("   Environment variables: {EnvironmentVariablesUnicode}",
+                                evdb.EnvironmentVariablesUnicode);
                             Console.WriteLine();
                             break;
                         case "IconEnvironmentDataBlock":
@@ -2531,7 +2661,8 @@ namespace JLECmd
                             var kfdb = extraDataBase as KnownFolderDataBlock;
                             Log.Information(">> Known folder data block");
                             Log.Information(
-                                "   Known folder GUID: {KnownFolderId} ==> {KnownFolderName}", kfdb.KnownFolderId, kfdb.KnownFolderName);
+                                "   Known folder GUID: {KnownFolderId} ==> {KnownFolderName}", kfdb.KnownFolderId,
+                                kfdb.KnownFolderName);
                             Console.WriteLine();
                             break;
                         case "PropertyStoreDataBlock":
@@ -2553,7 +2684,8 @@ namespace JLECmd
                                         $"{Utils.GetDescriptionFromGuidAndKey(prop.GUID, int.Parse(propertyName.Key))}"
                                             .PadRight(35);
 
-                                    Log.Information("   {Prefix} {Suffix} ==> {Value}", prefix, suffix, propertyName.Value);
+                                    Log.Information("   {Prefix} {Suffix} ==> {Value}", prefix, suffix,
+                                        propertyName.Value);
                                 }
 
                                 if (propCount == 0)
@@ -2626,7 +2758,8 @@ namespace JLECmd
             return vendor;
         }
 
-        private static CustomDestination ProcessCustomFile(string jlFile, bool q, string dt, bool ld, int codepage = 1252)
+        private static CustomDestination ProcessCustomFile(string jlFile, bool q, string dt, bool ld,
+            int codepage = 1252)
         {
             if (q == false)
             {
@@ -2648,7 +2781,8 @@ namespace JLECmd
                     Console.WriteLine();
 
                     Log.Information("--- AppId information ---");
-                    Log.Information("AppID: {AppId}, Description: {Description}", customDest.AppId.AppId, customDest.AppId.Description);
+                    Log.Information("AppID: {AppId}, Description: {Description}", customDest.AppId.AppId,
+                        customDest.AppId.Description);
                     Log.Information("--- DestList information ---");
                     Log.Information("  Entries:  {Count:N0}", customDest.Entries.Count);
                     Console.WriteLine();
@@ -2656,7 +2790,8 @@ namespace JLECmd
                     var entryNum = 0;
                     foreach (var entry in customDest.Entries)
                     {
-                        Log.Information("  Entry #: {EntryNum}, lnk count: {Count:N0} Rank: {Rank:G5}", entryNum, entry.LnkFiles.Count, entry.Rank);
+                        Log.Information("  Entry #: {EntryNum}, lnk count: {Count:N0} Rank: {Rank:G5}", entryNum,
+                            entry.LnkFiles.Count, entry.Rank);
 
                         if (entry.Name.Length > 0)
                         {
@@ -2687,7 +2822,8 @@ namespace JLECmd
 
                             if (ld)
                             {
-                                if ((lnkFile.Header.DataFlags & Lnk.Header.DataFlag.HasName) == Lnk.Header.DataFlag.HasName)
+                                if ((lnkFile.Header.DataFlags & Lnk.Header.DataFlag.HasName) ==
+                                    Lnk.Header.DataFlag.HasName)
                                 {
                                     Log.Information("  Name: {Name}", lnkFile.Name);
                                 }
@@ -2701,7 +2837,8 @@ namespace JLECmd
                                 if ((lnkFile.Header.DataFlags & Lnk.Header.DataFlag.HasWorkingDir) ==
                                     Lnk.Header.DataFlag.HasWorkingDir)
                                 {
-                                    Log.Information("  Working Directory: {WorkingDirectory}", lnkFile.WorkingDirectory);
+                                    Log.Information("  Working Directory: {WorkingDirectory}",
+                                        lnkFile.WorkingDirectory);
                                 }
 
                                 if ((lnkFile.Header.DataFlags & Lnk.Header.DataFlag.HasArguments) ==
@@ -2723,8 +2860,10 @@ namespace JLECmd
                                         Console.WriteLine();
                                         Log.Information(">> Volume information");
                                         Log.Information(
-                                            "  Drive type: {Desc}", GetDescriptionFromEnumValue(lnkFile.VolumeInfo.DriveType));
-                                        Log.Information("  Serial number: {VolumeSerialNumber}", lnkFile.VolumeInfo.VolumeSerialNumber);
+                                            "  Drive type: {Desc}",
+                                            GetDescriptionFromEnumValue(lnkFile.VolumeInfo.DriveType));
+                                        Log.Information("  Serial number: {VolumeSerialNumber}",
+                                            lnkFile.VolumeInfo.VolumeSerialNumber);
 
                                         var label = lnkFile.VolumeInfo.VolumeLabel.Length > 0
                                             ? lnkFile.VolumeInfo.VolumeLabel
@@ -2740,14 +2879,18 @@ namespace JLECmd
 
                                         if (lnkFile.NetworkShareInfo.DeviceName.Length > 0)
                                         {
-                                            Log.Information("    Device name: {DeviceName}", lnkFile.NetworkShareInfo.DeviceName);
+                                            Log.Information("    Device name: {DeviceName}",
+                                                lnkFile.NetworkShareInfo.DeviceName);
                                         }
 
-                                        Log.Information("    Share name: {NetworkShareName}", lnkFile.NetworkShareInfo.NetworkShareName);
+                                        Log.Information("    Share name: {NetworkShareName}",
+                                            lnkFile.NetworkShareInfo.NetworkShareName);
 
                                         Log.Information(
-                                            "    Provider type: {NetworkProviderType}", lnkFile.NetworkShareInfo.NetworkProviderType);
-                                        Log.Information("    Share flags: {ShareFlags}", lnkFile.NetworkShareInfo.ShareFlags);
+                                            "    Provider type: {NetworkProviderType}",
+                                            lnkFile.NetworkShareInfo.NetworkProviderType);
+                                        Log.Information("    Share flags: {ShareFlags}",
+                                            lnkFile.NetworkShareInfo.ShareFlags);
                                         Console.WriteLine();
                                     }
 
@@ -2774,7 +2917,8 @@ namespace JLECmd
                                     absPath += shellBag.Value + @"\";
                                 }
 
-                                Log.Information("  Absolute path: {Path}", GetAbsolutePathFromTargetIDs(lnkFile.TargetIDs));
+                                Log.Information("  Absolute path: {Path}",
+                                    GetAbsolutePathFromTargetIDs(lnkFile.TargetIDs));
                                 Console.WriteLine();
                             }
 
@@ -2796,7 +2940,8 @@ namespace JLECmd
                 }
 
                 Log.Information(
-                    "---------- Processed {SourceFile} in {TotalSeconds:N8} seconds ----------", customDest.SourceFile, sw.Elapsed.TotalSeconds);
+                    "---------- Processed {SourceFile} in {TotalSeconds:N8} seconds ----------", customDest.SourceFile,
+                    sw.Elapsed.TotalSeconds);
 
                 if (q == false)
                 {
@@ -2810,7 +2955,8 @@ namespace JLECmd
             {
                 if (ex.Message.Equals("Empty custom destinations jump list"))
                 {
-                    Log.Warning("Error processing {File}. Message: {Message}", jlFile, "Empty custom destinations jump list");
+                    Log.Warning("Error processing {File}. Message: {Message}", jlFile,
+                        "Empty custom destinations jump list");
                 }
                 else
                 {
@@ -2822,6 +2968,25 @@ namespace JLECmd
             }
 
             return null;
+        }
+
+        private class CustomHelpAction : SynchronousCommandLineAction
+        {
+            private readonly HelpAction _defaultHelp;
+
+            public CustomHelpAction(HelpAction action)
+            {
+                _defaultHelp = action;
+            }
+
+            public override int Invoke(ParseResult parseResult)
+            {
+                var result = _defaultHelp.Invoke(parseResult);
+
+                Log.Warning("{Msg}", string.Join(" ", parseResult.Tokens));
+
+                return result;
+            }
         }
 
         class DateTimeOffsetFormatter : IFormatProvider, ICustomFormatter
