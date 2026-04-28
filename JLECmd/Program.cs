@@ -36,6 +36,7 @@ using Directory = Alphaleonis.Win32.Filesystem.Directory;
 using File = Alphaleonis.Win32.Filesystem.File;
 using FileInfo = Alphaleonis.Win32.Filesystem.FileInfo;
 using Path = Alphaleonis.Win32.Filesystem.Path;
+
 #else
 using Directory = System.IO.Directory;
 using File = System.IO.File;
@@ -98,7 +99,7 @@ namespace JLECmd
 
             var fOpt = new Option<string>("-f")
             {
-                Description = "File to recursively process. Either this or -d is required"
+                Description = "File to process. Either this or -d is required"
             };
 
             var dOpt = new Option<string>("-d")
@@ -187,7 +188,7 @@ namespace JLECmd
                 "--dt")
             {
                 Description =
-                    "The custom date/time format to use when displaying time stamps. See https://goo.gl/CNVq0k for options. Default is: yyyy-MM-dd HH:mm:ss",
+                    "The custom date/time format to use when displaying time stamps. See https://goo.gl/CNVq0k for options",
                 DefaultValueFactory = _ => "yyyy-MM-dd HH:mm:ss"
             };
 
@@ -443,7 +444,8 @@ namespace JLECmd
                             return true;
                         }
 
-                        if (fsei.Extension.ToUpperInvariant() == ".AUTOMATICDESTINATIONS-MS" || fsei.Extension.ToUpperInvariant() == ".CUSTOMDESTINATIONS-MS")
+                        if (fsei.Extension.ToUpperInvariant() == ".AUTOMATICDESTINATIONS-MS" ||
+                            fsei.Extension.ToUpperInvariant() == ".CUSTOMDESTINATIONS-MS")
                         {
                             return true;
                         }
@@ -457,7 +459,8 @@ namespace JLECmd
 
                     var dirEnumOptions =
                         DirectoryEnumerationOptions.Files | DirectoryEnumerationOptions.Recursive |
-                        DirectoryEnumerationOptions.SkipReparsePoints | DirectoryEnumerationOptions.ContinueOnException |
+                        DirectoryEnumerationOptions.SkipReparsePoints |
+                        DirectoryEnumerationOptions.ContinueOnException |
                         DirectoryEnumerationOptions.BasicSearch;
 
                     var files2 = Directory.EnumerateFileSystemEntries(d, dirEnumOptions, filters);
