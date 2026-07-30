@@ -30,6 +30,7 @@
     
             dt              The custom date/time format to use when displaying timestamps. See https://goo.gl/CNVq0k for options. Default is: yyyy-MM-dd HH:mm:ss
             mp              Display higher precision for timestamps. Default is FALSE
+            user            Username to include in JSON/CSV output (e.g. the owner of the jump list artifacts). If not specified, output remains unchanged
     
     Examples: JLECmd.exe -f "C:\Temp\f01b4d95cf55d32a.customDestinations-ms" --mp
               JLECmd.exe -f "C:\Temp\f01b4d95cf55d32a.automaticDestinations-ms" --json "D:\jsonOutput" --jsonpretty
