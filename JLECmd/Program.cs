@@ -273,10 +273,10 @@ namespace JLECmd
             var levelSwitch = new LoggingLevelSwitch();
 
             JsConfig.DateHandler = DateHandler.ISO8601;
-            JsConfig<DateTimeOffset>.SerializeFn = d => d.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ");
-            JsConfig<DateTimeOffset?>.SerializeFn = d => d?.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ");
-            JsConfig<DateTime>.SerializeFn = d => d.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ");
-            JsConfig<DateTime?>.SerializeFn = d => d?.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ");
+            JsConfig<DateTimeOffset>.SerializeFn = JsonDate;
+            JsConfig<DateTimeOffset?>.SerializeFn = d => d.HasValue ? JsonDate(d.Value) : null;
+            JsConfig<DateTime>.SerializeFn = JsonDate;
+            JsConfig<DateTime?>.SerializeFn = d => d.HasValue ? JsonDate(d.Value) : null;
 
             ActiveDateTimeFormat = dt;
 
@@ -661,6 +661,15 @@ namespace JLECmd
                         swCustom = new StreamWriter(outFile);
                         csvCustom = new CsvWriter(swCustom, CultureInfo.InvariantCulture);
 
+                        //only add the User column when --user is used, so the default layout does not change
+                        var mapCustom = csvCustom.Context.AutoMap<CustomCsvOut>();
+                        if (user.IsNullOrEmpty())
+                        {
+                            mapCustom.Map(m => m.User).Ignore();
+                        }
+
+                        csvCustom.Context.RegisterClassMap(mapCustom);
+
                         csvCustom.WriteHeader(typeof(CustomCsvOut));
                         csvCustom.NextRecord();
                     }
@@ -879,6 +888,15 @@ namespace JLECmd
                     {
                         swAuto = new StreamWriter(outFile);
                         csvAuto = new CsvWriter(swAuto, CultureInfo.InvariantCulture);
+
+                        //only add the User column when --user is used, so the default layout does not change
+                        var mapAuto = csvAuto.Context.AutoMap<AutoCsvOut>();
+                        if (user.IsNullOrEmpty())
+                        {
+                            mapAuto.Map(m => m.User).Ignore();
+                        }
+
+                        csvAuto.Context.RegisterClassMap(mapAuto);
 
                         csvAuto.WriteHeader(typeof(AutoCsvOut));
                         csvAuto.NextRecord();
@@ -1609,6 +1627,24 @@ namespace JLECmd
 
 
             return csList;
+        }
+
+        private const string JsonDateFormat = "yyyy-MM-ddTHH:mm:ss.fffffffZ";
+
+        private static string JsonDate(DateTimeOffset d)
+        {
+            return d.UtcDateTime.ToString(JsonDateFormat, CultureInfo.InvariantCulture);
+        }
+
+        private static string JsonDate(DateTime d)
+        {
+            //timestamps without a kind are already UTC; ToUniversalTime would treat them as local time
+            if (d.Kind == DateTimeKind.Unspecified)
+            {
+                d = DateTime.SpecifyKind(d, DateTimeKind.Utc);
+            }
+
+            return d.ToUniversalTime().ToString(JsonDateFormat, CultureInfo.InvariantCulture);
         }
 
         private static void DumpToJsonAuto(AutomaticDestination auto, bool pretty, string outFile, string user)
