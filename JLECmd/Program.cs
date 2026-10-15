@@ -210,6 +210,11 @@ namespace JLECmd
                 DefaultValueFactory = _ => 1252
             };
 
+            var userOpt = new Option<string>("--user")
+            {
+                Description = "Username to include in JSON/CSV output (e.g. the owner of the jump list artifacts)"
+            };
+
             var debugOpt = new Option<bool>("--debug")
             {
                 Description = "Show debug information during processing",
@@ -240,6 +245,7 @@ namespace JLECmd
                 dtOpt,
                 mpOpt,
                 withDirOpt,
+                userOpt,
                 cpOpt,
                 debugOpt,
                 traceOpt
@@ -253,7 +259,7 @@ namespace JLECmd
                 result.GetValue(htmlOpt), result.GetValue(prettyOpt), result.GetValue(qOpt), result.GetValue(ldOpt),
                 result.GetValue(fdOpt), result.GetValue(appIdOpt), result.GetValue(dumpOpt), result.GetValue(dtOpt),
                 result.GetValue(mpOpt), result.GetValue(withDirOpt), result.GetValue(debugOpt),
-                result.GetValue(traceOpt), result.GetValue(cpOpt)));
+                result.GetValue(traceOpt), result.GetValue(cpOpt), result.GetValue(userOpt)));
 
             var foo = _rootCommand.Parse(args).InvokeAsync();
 
@@ -262,7 +268,7 @@ namespace JLECmd
 
         private static void DoWork(string f, string d, bool all, string csv, string csvf, string json, string jsonf,
             string html, bool pretty, bool q, bool ld, bool fd, string appIds, string dumpTo, string dt, bool mp,
-            bool withDir, bool debug, bool trace, int cp)
+            bool withDir, bool debug, bool trace, int cp, string user)
         {
             var levelSwitch = new LoggingLevelSwitch();
 
@@ -607,17 +613,17 @@ namespace JLECmd
 
             if (_processedAutoFiles.Count > 0)
             {
-                ExportAuto(csv, csvf, json, jsonf, html, pretty, dt, debug, withDir);
+                ExportAuto(csv, csvf, json, jsonf, html, pretty, dt, debug, withDir, user);
             }
 
             if (_processedCustomFiles.Count > 0)
             {
-                ExportCustom(csv, csvf, json, jsonf, html, pretty, dt);
+                ExportCustom(csv, csvf, json, jsonf, html, pretty, dt, user);
             }
         }
 
         private static void ExportCustom(string csv, string csvf, string json, string jsonf, string html, bool pretty,
-            string dt)
+            string dt, string user)
         {
             Console.WriteLine();
 
@@ -728,11 +734,11 @@ namespace JLECmd
                     if (json?.Length > 0)
                     {
                         SaveJsonCustom(processedFile, pretty,
-                            json, jsonf);
+                            json, jsonf, user);
                     }
 
 
-                    var records = GetCustomCsvFormat(processedFile, dt);
+                    var records = GetCustomCsvFormat(processedFile, dt, user);
 
                     try
                     {
@@ -839,7 +845,7 @@ namespace JLECmd
         }
 
         private static void ExportAuto(string csv, string csvf, string json, string jsonf, string html, bool pretty,
-            string dt, bool debug, bool wd)
+            string dt, bool debug, bool wd, string user)
         {
             Console.WriteLine();
 
@@ -947,10 +953,10 @@ namespace JLECmd
                     if (json?.Length > 0)
                     {
                         SaveJsonAuto(processedFile, pretty,
-                            json, jsonf);
+                            json, jsonf, user);
                     }
 
-                    var records = GetAutoCsvFormat(processedFile, debug, dt, wd);
+                    var records = GetAutoCsvFormat(processedFile, debug, dt, wd, user);
 
                     try
                     {
@@ -1103,7 +1109,7 @@ namespace JLECmd
             return false;
         }
 
-        private static List<CustomCsvOut> GetCustomCsvFormat(CustomDestination cust, string dt)
+        private static List<CustomCsvOut> GetCustomCsvFormat(CustomDestination cust, string dt, string user)
         {
             var csList = new List<CustomCsvOut>();
 
@@ -1117,6 +1123,7 @@ namespace JLECmd
             {
                 var csOut = new CustomCsvOut
                 {
+                    User = user,
                     SourceFile = cust.SourceFile,
                     SourceCreated = ct.ToString(dt),
                     SourceModified = mt.ToString(dt),
@@ -1224,7 +1231,7 @@ namespace JLECmd
             return csList;
         }
 
-        private static List<AutoCsvOut> GetAutoCsvFormat(AutomaticDestination auto, bool debug, string dt, bool wd)
+        private static List<AutoCsvOut> GetAutoCsvFormat(AutomaticDestination auto, bool debug, string dt, bool wd, string user)
         {
             var csList = new List<AutoCsvOut>();
 
@@ -1244,6 +1251,7 @@ namespace JLECmd
 
                 var csOut = new AutoCsvOut
                 {
+                    User = user,
                     SourceFile = auto.SourceFile,
                     SourceCreated = ct.ToString(dt),
                     SourceModified = mt.ToString(dt),
@@ -1461,6 +1469,7 @@ namespace JLECmd
                     {
                         var csOut = new AutoCsvOut
                         {
+                            User = user,
                             SourceFile = auto.SourceFile,
                             SourceCreated = ct.ToString(dt),
                             SourceModified = mt.ToString(dt),
@@ -1602,31 +1611,33 @@ namespace JLECmd
             return csList;
         }
 
-        private static void DumpToJsonAuto(AutomaticDestination auto, bool pretty, string outFile)
+        private static void DumpToJsonAuto(AutomaticDestination auto, bool pretty, string outFile, string user)
         {
+            object target = user.IsNullOrEmpty() ? auto : new { User = user, JumpList = auto };
             if (pretty)
             {
-                File.WriteAllText(outFile, auto.Dump());
+                File.WriteAllText(outFile, target.Dump());
             }
             else
             {
-                File.WriteAllText(outFile, auto.ToJson());
+                File.WriteAllText(outFile, target.ToJson());
             }
         }
 
-        private static void DumpToJsonCustom(CustomDestination cust, bool pretty, string outFile)
+        private static void DumpToJsonCustom(CustomDestination cust, bool pretty, string outFile, string user)
         {
+            object target = user.IsNullOrEmpty() ? cust : new { User = user, JumpList = cust };
             if (pretty)
             {
-                File.WriteAllText(outFile, cust.Dump());
+                File.WriteAllText(outFile, target.Dump());
             }
             else
             {
-                File.WriteAllText(outFile, cust.ToJson());
+                File.WriteAllText(outFile, target.ToJson());
             }
         }
 
-        private static void SaveJsonCustom(CustomDestination cust, bool pretty, string outDir, string jsonf)
+        private static void SaveJsonCustom(CustomDestination cust, bool pretty, string outDir, string jsonf, string user)
         {
             try
             {
@@ -1647,7 +1658,7 @@ namespace JLECmd
 
                 outFile = Path.Combine(outDir, outName);
 
-                DumpToJsonCustom(cust, pretty, outFile);
+                DumpToJsonCustom(cust, pretty, outFile, user);
             }
             catch (Exception ex)
             {
@@ -1655,7 +1666,7 @@ namespace JLECmd
             }
         }
 
-        private static void SaveJsonAuto(AutomaticDestination auto, bool pretty, string outDir, string jsonf)
+        private static void SaveJsonAuto(AutomaticDestination auto, bool pretty, string outDir, string jsonf, string user)
         {
             try
             {
@@ -1676,7 +1687,7 @@ namespace JLECmd
 
                 outFile = Path.Combine(outDir, outName);
 
-                DumpToJsonAuto(auto, pretty, outFile);
+                DumpToJsonAuto(auto, pretty, outFile, user);
             }
             catch (Exception ex)
             {
@@ -3033,6 +3044,7 @@ namespace JLECmd
 
     public sealed class AutoCsvOut
     {
+        public string User { get; set; }
         //jump list info
         public string SourceFile { get; set; }
         public string SourceCreated { get; set; }
@@ -3091,6 +3103,7 @@ namespace JLECmd
 
     public sealed class CustomCsvOut
     {
+        public string User { get; set; }
         //
         public string SourceFile { get; set; }
         public string SourceCreated { get; set; }
