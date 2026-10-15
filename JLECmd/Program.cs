@@ -266,6 +266,12 @@ namespace JLECmd
         {
             var levelSwitch = new LoggingLevelSwitch();
 
+            JsConfig.DateHandler = DateHandler.ISO8601;
+            JsConfig<DateTimeOffset>.SerializeFn = d => d.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ");
+            JsConfig<DateTimeOffset?>.SerializeFn = d => d?.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ");
+            JsConfig<DateTime>.SerializeFn = d => d.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ");
+            JsConfig<DateTime?>.SerializeFn = d => d?.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ");
+
             ActiveDateTimeFormat = dt;
 
             if (mp)
