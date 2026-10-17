@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Help;
@@ -23,16 +23,12 @@ using JumpList.Custom;
 using Lnk;
 using Lnk.ExtraData;
 using Lnk.ShellItems;
-//ExtensionBlocks has shell item classes of these names too (since 2026.10.1); these are Lnk's
-using ShellBag0X00 = Lnk.ShellItems.ShellBag0X00; using ShellBag0X01 = Lnk.ShellItems.ShellBag0X01; using ShellBag0X1F = Lnk.ShellItems.ShellBag0X1F; using ShellBag0X2F = Lnk.ShellItems.ShellBag0X2F; using ShellBag0X32 = Lnk.ShellItems.ShellBag0X32; using ShellBag0X71 = Lnk.ShellItems.ShellBag0X71; using ShellBag0X74 = Lnk.ShellItems.ShellBag0X74;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
 using ServiceStack;
 using ServiceStack.Text;
 using CsvWriter = CsvHelper.CsvWriter;
-using ShellBag = Lnk.ShellItems.ShellBag;
-using ShellBag0X31 = Lnk.ShellItems.ShellBag0X31;
 #if !NET6_0_OR_GREATER
 using Directory = Alphaleonis.Win32.Filesystem.Directory;
 using File = Alphaleonis.Win32.Filesystem.File;
@@ -54,6 +50,9 @@ namespace JLECmd
         private static readonly string _preciseTimeFormat = "yyyy-MM-dd HH:mm:ss.fffffff";
 
         private static List<string> _failedFiles;
+
+        //exports that failed (CSV, JSON, HTML): the exit code is 1
+        private static int _exportErrors;
         private static string ActiveDateTimeFormat;
 
         private static readonly Dictionary<string, string> MacList = new();
@@ -95,7 +94,7 @@ namespace JLECmd
             return principal.IsInRole(WindowsBuiltInRole.Administrator);
         }
 
-        private static async Task Main(string[] args)
+        private static async Task<int> Main(string[] args)
         {
             ExceptionlessClient.Default.Startup("ZqbYbvr4FIRjkpUrqCLC5N4RfKIuo9YIVmpQuOje");
 
@@ -263,12 +262,14 @@ namespace JLECmd
                 result.GetValue(mpOpt), result.GetValue(withDirOpt), result.GetValue(debugOpt),
                 result.GetValue(traceOpt), result.GetValue(cpOpt), result.GetValue(userOpt)));
 
-            var foo = _rootCommand.Parse(args).InvokeAsync();
+            var exitCode = await _rootCommand.Parse(args).InvokeAsync();
 
             Log.CloseAndFlush();
+
+            return exitCode;
         }
 
-        private static void DoWork(string f, string d, bool all, string csv, string csvf, string json, string jsonf,
+        private static int DoWork(string f, string d, bool all, string csv, string csvf, string json, string jsonf,
             string html, bool pretty, bool q, bool ld, bool fd, string appIds, string dumpTo, string dt, bool mp,
             bool withDir, bool debug, bool trace, int cp, string user)
         {
@@ -318,14 +319,14 @@ namespace JLECmd
 
 
                 Console.WriteLine();
-                return;
+                return 1;
             }
 
             if (f.IsNullOrEmpty() == false && !File.Exists(f))
             {
                 Log.Warning("File {F} not found. Exiting", f);
                 Console.WriteLine();
-                return;
+                return 1;
             }
 
             if (d.IsNullOrEmpty() == false &&
@@ -333,7 +334,7 @@ namespace JLECmd
             {
                 Log.Warning("Directory {D} not found. Exiting", d);
                 Console.WriteLine();
-                return;
+                return 1;
             }
 
 
@@ -397,13 +398,13 @@ namespace JLECmd
                             "Unable to access {F}. Are you running as an administrator? Error: {Message}", f,
                             ua.Message);
                         Console.WriteLine();
-                        return;
+                        return 1;
                     }
                     catch (Exception ex)
                     {
                         Log.Error(ex, "Error processing jump list: {Message}", ex.Message);
                         Console.WriteLine();
-                        return;
+                        return 1;
                     }
                 }
                 else
@@ -422,13 +423,13 @@ namespace JLECmd
                         Log.Error(ua,
                             "Unable to access {F}. Are you running as an administrator? Error: {Message}", f,
                             ua.Message);
-                        return;
+                        return 1;
                     }
                     catch (Exception ex)
                     {
                         Log.Error(ex,
                             "Error processing jump list. Error: {Message}", ex.Message);
-                        return;
+                        return 1;
                     }
                 }
             }
@@ -504,13 +505,13 @@ namespace JLECmd
                 {
                     Log.Error(ua,
                         "Unable to access {D}. Error message: {Message}", d, ua.Message);
-                    return;
+                    return 1;
                 }
                 catch (Exception ex)
                 {
                     Log.Error(ex,
                         "Error getting jump list files in {D}. Error: {Message}", d, ex.Message);
-                    return;
+                    return 1;
                 }
 
                 Log.Information("Found {Count:N0} files", jumpFiles.Count);
@@ -622,6 +623,9 @@ namespace JLECmd
             {
                 ExportCustom(csv, csvf, json, jsonf, html, pretty, dt, user);
             }
+
+            //1 when a file could not be processed or an export failed
+            return _failedFiles.Count > 0 || _exportErrors > 0 ? 1 : 0;
         }
 
         private static void ExportCustom(string csv, string csvf, string json, string jsonf, string html, bool pretty,
@@ -677,6 +681,7 @@ namespace JLECmd
                     }
                     catch (Exception ex)
                     {
+                        _exportErrors++;
                         Log.Error(ex,
                             "Unable to write to {Csv}. Custom CSV export canceled. Error: {Message}", csv, ex.Message);
                     }
@@ -757,6 +762,7 @@ namespace JLECmd
                     }
                     catch (Exception ex)
                     {
+                        _exportErrors++;
                         Log.Error(ex,
                             "Error writing record for {SourceFile} to {Csv}. Error: {Message}",
                             processedFile.SourceFile, csv, ex.Message);
@@ -850,6 +856,7 @@ namespace JLECmd
             }
             catch (Exception ex)
             {
+                _exportErrors++;
                 Log.Error(ex,
                     "Error exporting Custom Destinations data! Error: {Message}", ex.Message);
             }
@@ -905,6 +912,7 @@ namespace JLECmd
                     }
                     catch (Exception ex)
                     {
+                        _exportErrors++;
                         Log.Error(ex,
                             "Unable to write to {Csv}. Automatic CSV export canceled. Error: {Message}", csv,
                             ex.Message);
@@ -984,6 +992,7 @@ namespace JLECmd
                     }
                     catch (Exception ex)
                     {
+                        _exportErrors++;
                         Log.Error(ex,
                             "Error writing record for {SourceFile} to {Csv}. Error: {Message}",
                             processedFile.SourceFile, csv, ex.Message);
@@ -1090,6 +1099,7 @@ namespace JLECmd
             }
             catch (Exception ex)
             {
+                _exportErrors++;
                 Log.Error(ex,
                     "Error exporting Automatic Destinations data: {Message}", ex.Message);
             }
@@ -1224,9 +1234,9 @@ namespace JLECmd
                 {
                     var si = lnk.TargetIDs.Last();
 
-                    if (si.ExtensionBlocks?.Count > 0)
+                    if (TargetBlocks(si).Count > 0)
                     {
-                        var eb = si.ExtensionBlocks.LastOrDefault(t => t is Beef0004);
+                        var eb = TargetBlocks(si).LastOrDefault(t => t is Beef0004);
                         if (eb is Beef0004)
                         {
                             var eb4 = eb as Beef0004;
@@ -1440,9 +1450,9 @@ namespace JLECmd
 
                     var si = destListEntry.Lnk.TargetIDs.Last();
 
-                    if (si.ExtensionBlocks?.Count > 0)
+                    if (TargetBlocks(si).Count > 0)
                     {
-                        var eb = si.ExtensionBlocks.LastOrDefault(t => t is Beef0004);
+                        var eb = TargetBlocks(si).LastOrDefault(t => t is Beef0004);
                         if (eb is Beef0004)
                         {
                             var eb4 = eb as Beef0004;
@@ -1601,9 +1611,9 @@ namespace JLECmd
                         {
                             var si = f.TargetIDs.Last();
 
-                            if (si.ExtensionBlocks?.Count > 0)
+                            if (TargetBlocks(si).Count > 0)
                             {
-                                var eb = si.ExtensionBlocks.LastOrDefault(t => t is Beef0004);
+                                var eb = TargetBlocks(si).LastOrDefault(t => t is Beef0004);
                                 if (eb is Beef0004)
                                 {
                                     var eb4 = eb as Beef0004;
@@ -1700,6 +1710,7 @@ namespace JLECmd
             }
             catch (Exception ex)
             {
+                _exportErrors++;
                 Log.Error(ex, "Error exporting json for {SourceFile}. Error: {Message}", cust.SourceFile, ex.Message);
             }
         }
@@ -1729,6 +1740,7 @@ namespace JLECmd
             }
             catch (Exception ex)
             {
+                _exportErrors++;
                 Log.Error(ex, "Error exporting json for {SourceFile}. Error: {Message}", auto.SourceFile, ex.Message);
             }
         }
@@ -1742,7 +1754,145 @@ namespace JLECmd
             return attribute?.Description;
         }
 
-        private static string GetAbsolutePathFromTargetIDs(List<ShellBag> ids)
+        /// <summary>A file or folder item: its short name, modified time and extension blocks</summary>
+        private static void LogFileEntry(string shortName, DateTimeOffset? modified, List<IExtensionBlock> blocks, bool blankLineAfterBlocks)
+        {
+            Log.Information("    Short name: {ShortName}", shortName);
+            if (modified.HasValue)
+            {
+                Log.Information(
+                    "    Modified:    {LastModificationTime}", modified);
+            }
+            else
+            {
+                Log.Information("    Modified:");
+            }
+
+            LogItemBlocks(blocks, blankLineAfterBlocks);
+        }
+
+        private static void LogItemBlocks(List<IExtensionBlock> blocks, bool blankLineAfterBlocks)
+        {
+            if (blocks == null || blocks.Count == 0)
+            {
+                return;
+            }
+
+            Log.Information("    Extension block count: {Count:N0}", blocks.Count);
+            Console.WriteLine();
+
+            var extensionNumber = 0;
+            foreach (var extensionBlock in blocks)
+            {
+                Log.Information(
+                    "    --------- Block {ExtensionNumber:N0} ({Name}) ---------", extensionNumber,
+                    extensionBlock.GetType().Name);
+                switch (extensionBlock)
+                {
+                    case Beef0004 b4:
+                        Log.Information("    Long name: {LongName}", b4.LongName);
+                        if (b4.LocalisedName?.Length > 0)
+                        {
+                            Log.Information("    Localized name: {LocalisedName}", b4.LocalisedName);
+                        }
+
+                        if (b4.CreatedOnTime.HasValue)
+                        {
+                            Log.Information(
+                                "    Created:     {CreatedOnTime}", b4.CreatedOnTime);
+                        }
+                        else
+                        {
+                            Log.Information("    Created:");
+                        }
+
+                        if (b4.LastAccessTime.HasValue)
+                        {
+                            Log.Information(
+                                "    Last access: {LastAccessTime}", b4.LastAccessTime);
+                        }
+                        else
+                        {
+                            Log.Information("    Last access: ");
+                        }
+
+                        if (b4.MFTInformation.MFTEntryNumber > 0)
+                        {
+                            Log.Information(
+                                "    MFT entry/sequence #: {MftEntryNumber}/{MftSequenceNumber} (0x{MftEntryNumber2:X}/0x{MftSequenceNumber2:X})",
+                                b4.MFTInformation.MFTEntryNumber, b4.MFTInformation.MFTSequenceNumber,
+                                b4.MFTInformation.MFTEntryNumber, b4.MFTInformation.MFTSequenceNumber);
+                        }
+
+                        break;
+                    case Beef0025 b25:
+                        Log.Information(
+                            "    Filetime 1: {FileTime1}, Filetime 2: {FileTime2}", b25.FileTime1.Value,
+                            b25.FileTime2.Value);
+                        break;
+                    case Beef0003 b3:
+                        Log.Information("    GUID: {Guid1} ({Guid1Folder})", b3.GUID1, b3.GUID1Folder);
+                        break;
+                    case Beef001a b1a:
+                        Log.Information("    File document type: {FileDocumentTypeString}",
+                            b1a.FileDocumentTypeString);
+                        break;
+                    default:
+                        Log.Information("    {ExtensionBlock}", extensionBlock);
+                        break;
+                }
+
+                extensionNumber += 1;
+                if (blankLineAfterBlocks)
+                {
+                    Console.WriteLine();
+                }
+            }
+        }
+
+        private static void LogPropertyStore(PropertyStore store)
+        {
+            if (store == null || store.Sheets.Count == 0)
+            {
+                return;
+            }
+
+            Log.Information("  >> Property store (Format: GUID\\ID Description ==> Value)");
+            var propCount = 0;
+
+            foreach (var prop in store.Sheets)
+            foreach (var propertyName in prop.PropertyNames)
+            {
+                propCount += 1;
+
+                var prefix = $"{prop.GUID}\\{propertyName.Key}".PadRight(43);
+
+                //(int.Parse threw on a named property)
+                var suffix = int.TryParse(propertyName.Key, out var key)
+                    ? $"{Utils.GetDescriptionFromGuidAndKey(prop.GUID, key)}".PadRight(35)
+                    : string.Empty.PadRight(35);
+
+                Log.Information("     {Prefix} {Suffix} ==> {PropertyName}", prefix, suffix,
+                    propertyName.Value);
+            }
+
+            if (propCount == 0)
+            {
+                Log.Warning("     (Property store is empty)");
+            }
+        }
+
+        /// <summary>
+        ///     The target's extension blocks: a property view's (0x00) are those of the items in its Delegate ID List and then
+        ///     its own, so the last 0xbeef0004 is the deepest item's (as when Lnk had its own shell item classes)
+        /// </summary>
+        private static List<IExtensionBlock> TargetBlocks(IShellBag item)
+        {
+            var own = item.ExtensionBlocks ?? new List<IExtensionBlock>();
+            return item is ShellBag0X00 propertyView ? propertyView.DelegateExtensionBlocks.Concat(own).ToList() : own;
+        }
+
+        private static string GetAbsolutePathFromTargetIDs(List<IShellBag> ids)
         {
             if (ids == null)
             {
@@ -2268,276 +2418,67 @@ namespace JLECmd
 
                     Log.Information("  -{FriendlyName} ==> {Val}", shellBag.FriendlyName, val);
 
-                    switch (shellBag.GetType().Name.ToUpper())
+                    //the shell items are ExtensionBlocks' classes (shared with ShellBags Explorer, SBECmd and the RECmd plugins)
+                    switch (shellBag)
                     {
-                        case "SHELLBAG0X36":
-                        case "SHELLBAG0X32":
-                            var b32 = shellBag as ShellBag0X32;
+                        //files and folders: 0x32 and 0x36 (a blank line after each block), 0x31 (and 0x35, 0x39, 0xB1, read
+                        //as one) and 0x3A file entries
+                        case ShellBag0X32 b:
+                            LogFileEntry(b.ShortName, b.LastModificationTime, b.ExtensionBlocks, true);
+                            break;
+                        case ShellBag0X36 b:
+                            LogFileEntry(b.ShortName, b.LastModificationTime, b.ExtensionBlocks, true);
+                            break;
+                        case ShellBag0X31 b:
+                            LogFileEntry(b.ShortName, b.LastModificationTime, b.ExtensionBlocks, false);
+                            break;
+                        case ShellBag0X35 b:
+                            LogFileEntry(b.ShortName, b.LastModificationTime, b.ExtensionBlocks, false);
+                            break;
+                        case ShellBag0X39 b:
+                            LogFileEntry(b.ShortName, b.LastModificationTime, b.ExtensionBlocks, false);
+                            break;
+                        case ShellBag0XB1 b:
+                            LogFileEntry(b.ShortName, b.LastModificationTime, b.ExtensionBlocks, false);
+                            break;
+                        case ShellBag0X3A b when b.ShortName != null:
+                            LogFileEntry(b.ShortName, b.LastModificationTime, b.ExtensionBlocks, false);
+                            break;
 
-                            Log.Information("    Short name: {ShortName}", b32.ShortName);
-                            if (b32.LastModificationTime.HasValue)
+                        //users files folder (a 0x74 item with CFSF)
+                        case ShellBagCFSF b:
+                            if (b.LastModificationTime.HasValue)
                             {
                                 Log.Information(
-                                    "    Modified:    {LastModificationTime}", b32.LastModificationTime);
+                                    "    Modified:    {LastModificationTime}", b.LastModificationTime);
                             }
                             else
                             {
                                 Log.Information("    Modified:");
                             }
 
+                            LogItemBlocks(b.ExtensionBlocks, false);
+                            break;
 
-                            var extensionNumber32 = 0;
-                            if (b32.ExtensionBlocks.Count > 0)
+                        case ShellBag0X00 b:
+                            foreach (var store in b.PropertyStores)
                             {
-                                Log.Information("    Extension block count: {Count:N0}", b32.ExtensionBlocks.Count);
-                                Console.WriteLine();
-                                foreach (var extensionBlock in b32.ExtensionBlocks)
-                                {
-                                    Log.Information(
-                                        "    --------- Block {ExtensionNumber32:N0} ({Name}) ---------",
-                                        extensionNumber32, extensionBlock.GetType().Name);
-                                    if (extensionBlock is Beef0004)
-                                    {
-                                        var b4 = extensionBlock as Beef0004;
-
-                                        Log.Information("    Long name: {LongName}", b4.LongName);
-                                        if (b4.LocalisedName.Length > 0)
-                                        {
-                                            Log.Information("    Localized name: {LocalisedName}", b4.LocalisedName);
-                                        }
-
-                                        if (b4.CreatedOnTime.HasValue)
-                                        {
-                                            Log.Information(
-                                                "    Created:     {CreatedOnTime}", b4.CreatedOnTime);
-                                        }
-                                        else
-                                        {
-                                            Log.Information("    Created:");
-                                        }
-
-                                        if (b4.LastAccessTime.HasValue)
-                                        {
-                                            Log.Information(
-                                                "    Last access: {LastAccessTime}", b4.LastAccessTime);
-                                        }
-                                        else
-                                        {
-                                            Log.Information("    Last access: ");
-                                        }
-
-                                        if (b4.MFTInformation.MFTEntryNumber > 0)
-                                        {
-                                            Log.Information(
-                                                "    MFT entry/sequence #: {MftEntryNumber}/{MftSequenceNumber} (0x{MftEntryNumber2:X}/0x{MftSequenceNumber2:X})",
-                                                b4.MFTInformation.MFTEntryNumber, b4.MFTInformation.MFTSequenceNumber,
-                                                b4.MFTInformation.MFTEntryNumber, b4.MFTInformation.MFTSequenceNumber);
-                                        }
-                                    }
-                                    else if (extensionBlock is Beef0025)
-                                    {
-                                        var b25 = extensionBlock as Beef0025;
-                                        Log.Information(
-                                            "    Filetime 1: {FileTime1}, Filetime 2: {FileTime2}", b25.FileTime1.Value,
-                                            b25.FileTime2.Value);
-                                    }
-                                    else if (extensionBlock is Beef0003)
-                                    {
-                                        var b3 = extensionBlock as Beef0003;
-                                        Log.Information("    GUID: {Guid1} ({Guid1Folder})", b3.GUID1, b3.GUID1Folder);
-                                    }
-                                    else if (extensionBlock is Beef001a)
-                                    {
-                                        var b3 = extensionBlock as Beef001a;
-                                        Log.Information("    File document type: {FileDocumentTypeString}",
-                                            b3.FileDocumentTypeString);
-                                    }
-                                    else
-                                    {
-                                        Log.Information("    {ExtensionBlock}", extensionBlock);
-                                    }
-
-                                    extensionNumber32 += 1;
-                                    Console.WriteLine();
-                                }
+                                LogPropertyStore(store);
                             }
 
                             break;
-                        case "SHELLBAG0X31":
-
-                            var b3x = shellBag as ShellBag0X31;
-
-                            Log.Information("    Short name: {ShortName}", b3x.ShortName);
-                            if (b3x.LastModificationTime.HasValue)
+                        case ShellBag0X1F b:
+                            LogPropertyStore(b.PropertyStore);
+                            break;
+                        case ShellBag0X01 b:
+                            if (b.DriveLetter?.Length > 0)
                             {
-                                Log.Information(
-                                    "    Modified:    {LastModificationTime}", b3x.LastModificationTime);
-                            }
-                            else
-                            {
-                                Log.Information("    Modified:");
-                            }
-
-                            var extensionNumber = 0;
-                            if (b3x.ExtensionBlocks.Count > 0)
-                            {
-                                Log.Information("    Extension block count: {Count:N0}", b3x.ExtensionBlocks.Count);
-                                Console.WriteLine();
-                                foreach (var extensionBlock in b3x.ExtensionBlocks)
-                                {
-                                    Log.Information(
-                                        "    --------- Block {ExtensionNumber:N0} ({Name}) ---------", extensionNumber,
-                                        extensionBlock.GetType().Name);
-                                    if (extensionBlock is Beef0004)
-                                    {
-                                        var b4 = extensionBlock as Beef0004;
-
-                                        Log.Information("    Long name: {LongName}", b4.LongName);
-                                        if (b4.LocalisedName.Length > 0)
-                                        {
-                                            Log.Information("    Localized name: {LocalisedName}", b4.LocalisedName);
-                                        }
-
-                                        if (b4.CreatedOnTime.HasValue)
-                                        {
-                                            Log.Information(
-                                                "    Created:     {CreatedOnTime}", b4.CreatedOnTime);
-                                        }
-                                        else
-                                        {
-                                            Log.Information("    Created:");
-                                        }
-
-                                        if (b4.LastAccessTime.HasValue)
-                                        {
-                                            Log.Information(
-                                                "    Last access: {LastAccessTime}", b4.LastAccessTime);
-                                        }
-                                        else
-                                        {
-                                            Log.Information("    Last access: ");
-                                        }
-
-                                        if (b4.MFTInformation.MFTEntryNumber > 0)
-                                        {
-                                            Log.Information(
-                                                "    MFT entry/sequence #: {MftEntryNumber}/{MftSequenceNumber} (0x{MftEntryNumber2:X}/0x{MftSequenceNumber2:X})",
-                                                b4.MFTInformation.MFTEntryNumber, b4.MFTInformation.MFTSequenceNumber,
-                                                b4.MFTInformation.MFTEntryNumber, b4.MFTInformation.MFTSequenceNumber);
-                                        }
-                                    }
-                                    else if (extensionBlock is Beef0025)
-                                    {
-                                        var b25 = extensionBlock as Beef0025;
-                                        Log.Information(
-                                            "    Filetime 1: {FileTime1}, Filetime 2: {FileTime2}", b25.FileTime1.Value,
-                                            b25.FileTime2.Value);
-                                    }
-                                    else if (extensionBlock is Beef0003)
-                                    {
-                                        var b3 = extensionBlock as Beef0003;
-                                        Log.Information("    GUID: {Guid1} ({Guid1Folder})", b3.GUID1, b3.GUID1Folder);
-                                    }
-                                    else if (extensionBlock is Beef001a)
-                                    {
-                                        var b3 = extensionBlock as Beef001a;
-                                        Log.Information("    File document type: {FileDocumentTypeString}",
-                                            b3.FileDocumentTypeString);
-                                    }
-                                    else
-                                    {
-                                        Log.Information("    {ExtensionBlock}", extensionBlock);
-                                    }
-
-                                    extensionNumber += 1;
-                                }
+                                Log.Information("  Drive letter: {DriveLetter}", b.DriveLetter);
                             }
 
                             break;
-
-                        case "SHELLBAG0X00":
-                            var b00 = shellBag as ShellBag0X00;
-
-                            if (b00.PropertyStore.Sheets.Count > 0)
-                            {
-                                Log.Information("  >> Property store (Format: GUID\\ID Description ==> Value)");
-                                var propCount = 0;
-
-                                foreach (var prop in b00.PropertyStore.Sheets)
-                                foreach (var propertyName in prop.PropertyNames)
-                                {
-                                    propCount += 1;
-
-                                    var prefix = $"{prop.GUID}\\{propertyName.Key}".PadRight(43);
-
-                                    var suffix =
-                                        $"{Utils.GetDescriptionFromGuidAndKey(prop.GUID, int.Parse(propertyName.Key))}"
-                                            .PadRight(35);
-
-                                    Log.Information("     {Prefix} {Suffix} ==> {PropertyName}", prefix, suffix,
-                                        propertyName.Value);
-                                }
-
-                                if (propCount == 0)
-                                {
-                                    Log.Warning("     (Property store is empty)");
-                                }
-                            }
-
-                            break;
-                        case "SHELLBAG0X01":
-                            var baaaa1f = shellBag as ShellBag0X01;
-                            if (baaaa1f.DriveLetter.Length > 0)
-                            {
-                                Log.Information("  Drive letter: {DriveLetter}", baaaa1f.DriveLetter);
-                            }
-
-                            break;
-                        case "SHELLBAG0X1F":
-
-                            var b1f = shellBag as ShellBag0X1F;
-
-                            if (b1f.PropertyStore.Sheets.Count > 0)
-                            {
-                                Log.Information("  >> Property store (Format: GUID\\ID Description ==> Value)");
-                                var propCount = 0;
-
-                                foreach (var prop in b1f.PropertyStore.Sheets)
-                                foreach (var propertyName in prop.PropertyNames)
-                                {
-                                    propCount += 1;
-
-                                    var prefix = $"{prop.GUID}\\{propertyName.Key}".PadRight(43);
-
-                                    var suffix =
-                                        $"{Utils.GetDescriptionFromGuidAndKey(prop.GUID, int.Parse(propertyName.Key))}"
-                                            .PadRight(35);
-
-                                    Log.Information("     {Prefix} {Suffix} ==> {PropertyName}", prefix, suffix,
-                                        propertyName.Value);
-                                }
-
-                                if (propCount == 0)
-                                {
-                                    Log.Warning("     (Property store is empty)");
-                                }
-                            }
-
-                            break;
-                        case "SHELLBAG0X2E":
-                            break;
-                        case "SHELLBAG0X2F":
-                            var b2f = shellBag as ShellBag0X2F;
-
-                            break;
-                        case "SHELLBAG0X40":
-                            break;
-                        case "SHELLBAG0X61":
-
-                            break;
-                        case "SHELLBAG0X71":
-                            var b71 = shellBag as ShellBag0X71;
-                            if (b71.PropertyStore?.Sheets.Count > 0)
+                        case ShellBag0X71 b:
+                            if (b.PropertyStore?.Sheets.Count > 0)
                             {
                                 Log.Warning(
                                     "Property stores found! Please email lnk file to {Email} so support can be added!!",
@@ -2545,106 +2486,33 @@ namespace JLECmd
                             }
 
                             break;
-                        case "SHELLBAG0X74":
-                            var b74 = shellBag as ShellBag0X74;
 
-                            if (b74.LastModificationTime.HasValue)
-                            {
-                                Log.Information(
-                                    "    Modified:    {LastModificationTime}", b74.LastModificationTime);
-                            }
-                            else
-                            {
-                                Log.Information("    Modified:");
-                            }
-
-                            var extensionNumber74 = 0;
-                            if (b74.ExtensionBlocks.Count > 0)
-                            {
-                                Log.Information("    Extension block count: {Count:N0}", b74.ExtensionBlocks.Count);
-                                Console.WriteLine();
-                                foreach (var extensionBlock in b74.ExtensionBlocks)
-                                {
-                                    Log.Information(
-                                        "    --------- Block {ExtensionNumber74:N0} ({Name}) ---------",
-                                        extensionNumber74, extensionBlock.GetType().Name);
-                                    if (extensionBlock is Beef0004)
-                                    {
-                                        var b4 = extensionBlock as Beef0004;
-
-                                        Log.Information("    Long name: {b4.LongName}", b4.LongName);
-                                        if (b4.LocalisedName.Length > 0)
-                                        {
-                                            Log.Information("    Localized name: {b4.LocalisedName}", b4.LocalisedName);
-                                        }
-
-                                        if (b4.CreatedOnTime.HasValue)
-                                        {
-                                            Log.Information(
-                                                "    Created:     {CreatedOnTime}", b4.CreatedOnTime);
-                                        }
-                                        else
-                                        {
-                                            Log.Information("    Created:");
-                                        }
-
-                                        if (b4.LastAccessTime.HasValue)
-                                        {
-                                            Log.Information(
-                                                "    Last access: {LastAccessTime}", b4.LastAccessTime.Value);
-                                        }
-                                        else
-                                        {
-                                            Log.Information("    Last access: ");
-                                        }
-
-                                        if (b4.MFTInformation.MFTEntryNumber > 0)
-                                        {
-                                            Log.Information(
-                                                "    MFT entry/sequence #: {MftEntryNumber}/{MftSequenceNumber} (0x{MftEntryNumber2:X}/0x{MftSequenceNumber2:X})",
-                                                b4.MFTInformation.MFTEntryNumber, b4.MFTInformation.MFTSequenceNumber,
-                                                b4.MFTInformation.MFTEntryNumber, b4.MFTInformation.MFTSequenceNumber);
-                                        }
-                                    }
-                                    else if (extensionBlock is Beef0025)
-                                    {
-                                        var b25 = extensionBlock as Beef0025;
-                                        Log.Information(
-                                            "    Filetime 1: {FileTime1}, Filetime 2: {FileTime2}", b25.FileTime1.Value,
-                                            b25.FileTime2.Value);
-                                    }
-                                    else if (extensionBlock is Beef0003)
-                                    {
-                                        var b3 = extensionBlock as Beef0003;
-                                        Log.Information("    GUID: {Guid1} ({Guid1Folder})", b3.GUID1, b3.GUID1Folder);
-                                    }
-                                    else if (extensionBlock is Beef001a)
-                                    {
-                                        var b3 = extensionBlock as Beef001a;
-                                        Log.Information("    File document type: {FileDocumentTypeString}",
-                                            b3.FileDocumentTypeString);
-                                    }
-                                    else
-                                    {
-                                        Log.Information("    {ExtensionBlock}", extensionBlock);
-                                    }
-
-                                    extensionNumber74 += 1;
-                                }
-                            }
-
+                        //the value above is all there is
+                        case ShellBagDamaged:
+                        case ShellBag0X2E:
+                        case ShellBag0X2F:
+                        case ShellBag0X2A:
+                        case ShellBag0X3A:
+                        case ShellBag0X41:
+                        case ShellBag0X42:
+                        case ShellBag0X43:
+                        case ShellBag0X46:
+                        case ShellBag0X47:
+                        case ShellBag0X61:
+                        case ShellBag0X23:
+                        case ShellBag0XC3:
+                        case ShellBag0X74:
+                        case ShellBag0X79:
+                        case ShellBag0X4C:
+                        case ShellBagZipContents:
                             break;
-                        case "SHELLBAG0XC3":
-                            break;
-                        case "SHELLBAGZIPCONTENTS":
-                            break;
+
                         default:
                             Log.Warning(">> UNMAPPED Type! Please email lnk file to {Email} so support can be added!",
                                 "saericzimmerman@gmail.com");
                             Log.Warning(">>{ShellBag}", shellBag);
                             break;
                     }
-
                     Console.WriteLine();
                 }
 
