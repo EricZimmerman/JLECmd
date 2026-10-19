@@ -35,3 +35,4 @@ Build the old and the new version, run both over the jump list corpus (`Corpus/J
 ## Versioning
 
 `<Version>` in `JLECmd/JLECmd.csproj`, bumped by hand. The dependency order is GuidMapping → ExtensionBlocks → Lnk → JumpList → JLECmd; JLECmd references ExtensionBlocks, Lnk and JumpList directly, so keep them in step with the versions JumpList uses.
+- Release builds are staged, signed and zipped by `Build-ZimmermanTools.ps1` in the get-zimmermantools repository (cloned next to this one). Its program table says what goes in this tool's download zip (the files taken from the build, folders copied from the repositories, files kept from the current release zip); a new output file, a content folder or a change in how the tool is built (single file, another framework) needs that entry updated.
