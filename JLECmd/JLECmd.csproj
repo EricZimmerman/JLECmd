@@ -11,9 +11,6 @@
     <Copyright>Eric Zimmerman</Copyright>
     <Version>2026.10.2</Version>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-  </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>PcDesktopProgress128.ico</ApplicationIcon>
   </PropertyGroup>
