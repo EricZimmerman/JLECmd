@@ -53,6 +53,9 @@ namespace JLECmd
 
         //exports that failed (CSV, JSON, HTML): the exit code is 1
         private static int _exportErrors;
+
+        //files that could not be opened or read (a damaged file is only listed in _failedFiles)
+        private static int _readErrors;
         private static string ActiveDateTimeFormat;
 
         private static readonly Dictionary<string, string> MacList = new();
@@ -358,6 +361,7 @@ namespace JLECmd
             _processedCustomFiles = new List<CustomDestination>();
 
             _failedFiles = new List<string>();
+            _readErrors = 0;
 
 
             if (appIds?.Length > 0)
@@ -624,8 +628,9 @@ namespace JLECmd
                 ExportCustom(csv, csvf, json, jsonf, html, pretty, dt, user);
             }
 
-            //1 when a file could not be processed or an export failed
-            return _failedFiles.Count > 0 || _exportErrors > 0 ? 1 : 0;
+            //1 when a file could not be opened or read, or an export failed. Damaged files are listed under Failed files but are
+            //not a failure of the run
+            return _readErrors > 0 || _exportErrors > 0 ? 1 : 0;
         }
 
         private static void ExportCustom(string csv, string csvf, string json, string jsonf, string html, bool pretty,
@@ -2187,9 +2192,23 @@ namespace JLECmd
                 _failedFiles.Add($"{jlFile} ==> ({ex.Message})");
                 Log.Fatal(ex, "Error opening {File}. Message: {Message}", jlFile, ex.Message);
                 Console.WriteLine();
+
+                if (IsReadError(ex))
+                {
+                    _readErrors++;
+                }
             }
 
             return null;
+        }
+
+        /// <summary>
+        ///     True when a file could not be opened or read (access denied, locked, an IO error), as opposed to a file that
+        ///     was read but is damaged
+        /// </summary>
+        private static bool IsReadError(Exception ex)
+        {
+            return ex is UnauthorizedAccessException || (ex is IOException && !(ex is EndOfStreamException));
         }
 
         private static void DumpLnkDetail(LnkFile lnk)
@@ -2888,6 +2907,11 @@ namespace JLECmd
                 {
                     _failedFiles.Add($"{jlFile} ==> ({ex.Message})");
                     Log.Fatal(ex, "Error opening {File}. Message: {Message}", jlFile, ex.Message);
+
+                    if (IsReadError(ex))
+                    {
+                        _readErrors++;
+                    }
                 }
 
                 Console.WriteLine();
