@@ -7,7 +7,7 @@ JSON and HTML, and the shortcuts can be saved as `.lnk` files.
 
 | | |
 |---|---|
-| **Version** | 2026.10.2 |
+| **Version** | 2026.10.3 |
 | **Download** | [.NET 10](https://download.ericzimmermanstools.com/net/JLECmd.zip) (recommended) &middot; [.NET Framework 4.7.2](https://download.ericzimmermanstools.com/JLECmd.zip) |
 | **All tools** | [ericzimmerman.github.io](https://ericzimmerman.github.io) or [Get-ZimmermanTools](https://download.ericzimmermanstools.com/Get-ZimmermanTools.zip), which downloads them all and keeps them current |
 | **Changes** | [ChangeLog](https://ericzimmerman.github.io/changelog/) |
@@ -94,6 +94,7 @@ show "Unknown AppId"; `--appIds` adds descriptions to the built-in list.
   lists (about 24 MB and up) load; custom destination categories after the first get their names.
 - Real folder names in `TargetIDAbsolutePath`, and all the shortcut parsing fixes listed under LECmd.
 - With `--fd`, jump lists with a named property (AutoList) are no longer dropped.
+- 2026.10.3: 0x2E root folder items with extension blocks after the GUID (a known folder such as Downloads) are read, and zip contents with data in bytes 4-9 (JumpList 2026.10.9, Lnk 2026.10.10, ExtensionBlocks 2026.10.8).
 - Exit code 1 when the tool fails (it was always 0). Error reports include source file and line numbers.
 
 The full list is in the [ChangeLog](https://ericzimmerman.github.io/changelog/).
