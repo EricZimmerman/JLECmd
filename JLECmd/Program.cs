@@ -474,12 +474,11 @@ namespace JLECmd
 
                     filters.RecursionFilter = entryInfo => !entryInfo.IsMountPoint && !entryInfo.IsSymbolicLink;
 
-                    filters.ErrorFilter = (errorCode, errorMessage, pathProcessed) => true;
+                    filters.ErrorFilter = UnreadableFolder;
 
                     var dirEnumOptions =
                         DirectoryEnumerationOptions.Files | DirectoryEnumerationOptions.Recursive |
                         DirectoryEnumerationOptions.SkipReparsePoints |
-                        DirectoryEnumerationOptions.ContinueOnException |
                         DirectoryEnumerationOptions.BasicSearch;
 
                     var files2 = Directory.EnumerateFileSystemEntries(d, dirEnumOptions, filters);
@@ -490,16 +489,8 @@ namespace JLECmd
                         mask = "*";
                     }
 
-                    var enumerationOptions = new EnumerationOptions
-                    {
-                        IgnoreInaccessible = true,
-                        MatchCasing = MatchCasing.CaseInsensitive,
-                        RecurseSubdirectories = true,
-                        AttributesToSkip = 0
-                    };
-
-                    var files2 =
-                        Directory.EnumerateFileSystemEntries(d, mask, enumerationOptions);
+                    //folders that can't be read are reported and counted (IgnoreInaccessible skipped them silently)
+                    var files2 = FindEntries(d, mask);
 #endif
 
 
@@ -2210,6 +2201,87 @@ namespace JLECmd
         {
             return ex is UnauthorizedAccessException || (ex is IOException && !(ex is EndOfStreamException));
         }
+
+#if !NET6_0_OR_GREATER
+        /// <summary>
+        ///     AlphaFS ErrorFilter: a folder that can't be read is reported and counted as a read error (exit 1 at the end),
+        ///     and the search goes on (it was skipped silently).
+        ///     The options leave out ContinueOnException: with it, AlphaFS never calls ErrorFilter
+        /// </summary>
+        private static bool UnreadableFolder(int errorCode, string errorMessage, string pathProcessed)
+        {
+            Log.Error("Unable to read folder {Folder}: {Reason}", pathProcessed, errorMessage);
+            _readErrors++;
+            return true;
+        }
+#else
+        /// <summary>
+        ///     Entries under a folder, recursively, matching a pattern (case-insensitive), as
+        ///     Directory.EnumerateFileSystemEntries did with IgnoreInaccessible. Folders that can't be read are skipped and kept
+        ///     in Unreadable (IgnoreInaccessible skipped them silently)
+        /// </summary>
+        private sealed class EntryFinder : System.IO.Enumeration.FileSystemEnumerator<string>
+        {
+            private readonly string _pattern;
+
+            //the subfolder whose handle is opened right after ShouldRecurseIntoEntry; an error then is about that folder
+            private string _lastRecursed;
+
+            //folder (null: the folder searched, as the base constructor can report it before this one runs) and reason
+            public readonly List<(string Folder, string Reason)> Unreadable = new();
+
+            public EntryFinder(string directory, string pattern) : base(directory,
+                new System.IO.EnumerationOptions { IgnoreInaccessible = false, RecurseSubdirectories = true, AttributesToSkip = 0 })
+            {
+                _pattern = pattern;
+            }
+
+            protected override bool ShouldRecurseIntoEntry(ref System.IO.Enumeration.FileSystemEntry entry)
+            {
+                _lastRecursed = entry.ToSpecifiedFullPath();
+                return true;
+            }
+
+            protected override bool ShouldIncludeEntry(ref System.IO.Enumeration.FileSystemEntry entry)
+            {
+                _lastRecursed = null;
+                return System.IO.Enumeration.FileSystemName.MatchesSimpleExpression(_pattern, entry.FileName, true);
+            }
+
+            protected override string TransformEntry(ref System.IO.Enumeration.FileSystemEntry entry)
+            {
+                return entry.ToSpecifiedFullPath();
+            }
+
+            protected override bool ContinueOnError(int error)
+            {
+                Unreadable.Add((_lastRecursed, new Win32Exception(error).Message));
+                _lastRecursed = null;
+                return true;
+            }
+        }
+
+        /// <summary>
+        ///     The entries found; each folder that can't be read is reported and counted as a read error (exit 1 at the end)
+        /// </summary>
+        private static List<string> FindEntries(string directory, string pattern)
+        {
+            using var finder = new EntryFinder(directory, pattern);
+            var entries = new List<string>();
+            while (finder.MoveNext())
+            {
+                entries.Add(finder.Current);
+            }
+
+            foreach (var (folder, reason) in finder.Unreadable)
+            {
+                Log.Error("Unable to read folder {Folder}: {Reason}", folder ?? directory, reason);
+                _readErrors++;
+            }
+
+            return entries;
+        }
+#endif
 
         private static void DumpLnkDetail(LnkFile lnk)
         {
