@@ -229,6 +229,11 @@ namespace JLECmd
                 Description = "Show trace information during processing",
                 DefaultValueFactory = _ => false
             };
+            var coOpt = new Option<bool>("--co")
+            {
+                Description = "Save all console messages to <timestamp>_JLECmd_<version>_ConsoleLog.txt in the output directory (the first of --csv, --json, --html given)",
+                DefaultValueFactory = _ => false
+            };
 
             _rootCommand = new RootCommand
             {
@@ -252,7 +257,8 @@ namespace JLECmd
                 userOpt,
                 cpOpt,
                 debugOpt,
-                traceOpt
+                traceOpt,
+                coOpt
             };
 
             _rootCommand.Description = Header + "\r\n\r\n" + Footer;
@@ -263,7 +269,7 @@ namespace JLECmd
                 result.GetValue(htmlOpt), result.GetValue(prettyOpt), result.GetValue(qOpt), result.GetValue(ldOpt),
                 result.GetValue(fdOpt), result.GetValue(appIdOpt), result.GetValue(dumpOpt), result.GetValue(dtOpt),
                 result.GetValue(mpOpt), result.GetValue(withDirOpt), result.GetValue(debugOpt),
-                result.GetValue(traceOpt), result.GetValue(cpOpt), result.GetValue(userOpt)));
+                result.GetValue(traceOpt), result.GetValue(cpOpt), result.GetValue(userOpt), result.GetValue(coOpt)));
 
             var exitCode = await _rootCommand.Parse(args).InvokeAsync();
 
@@ -274,7 +280,7 @@ namespace JLECmd
 
         private static int DoWork(string f, string d, bool all, string csv, string csvf, string json, string jsonf,
             string html, bool pretty, bool q, bool ld, bool fd, string appIds, string dumpTo, string dt, bool mp,
-            bool withDir, bool debug, bool trace, int cp, string user)
+            bool withDir, bool debug, bool trace, int cp, string user, bool co)
         {
             var levelSwitch = new LoggingLevelSwitch();
 
@@ -313,6 +319,12 @@ namespace JLECmd
                 .WriteTo.Console(outputTemplate: template, formatProvider: formatter)
                 .MinimumLevel.ControlledBy(levelSwitch);
 
+            var consoleLog = co ? ConsoleLog.GetPath(ts, csv, json, html) : null;
+            if (consoleLog != null)
+            {
+                conf.WriteTo.File(consoleLog, outputTemplate: ConsoleLog.Template, formatProvider: formatter);
+            }
+
             Log.Logger = conf.CreateLogger();
 
             if (f.IsNullOrEmpty() && d.IsNullOrEmpty())
@@ -345,6 +357,17 @@ namespace JLECmd
             Console.WriteLine();
             Log.Information("Command line: {Args}", string.Join(" ", Environment.GetCommandLineArgs().Skip(1)));
             Console.WriteLine();
+
+            if (consoleLog != null)
+            {
+                Log.Information("Console log: {Path}", consoleLog);
+                Console.WriteLine();
+            }
+            else if (co)
+            {
+                Log.Warning("--co: no output directory was given, so the console messages are not saved");
+                Console.WriteLine();
+            }
 
             if (IsAdministrator() == false)
             {
@@ -3024,8 +3047,9 @@ namespace JLECmd
             {
                 if (arg is DateTimeOffset)
                 {
+                    //an explicit format (the log templates' {Timestamp:HH:mm:ss.fff}) wins over --dt
                     var size = (DateTimeOffset)arg;
-                    return size.ToString(ActiveDateTimeFormat);
+                    return size.ToString(string.IsNullOrEmpty(format) ? ActiveDateTimeFormat : format);
                 }
 
                 var formattable = arg as IFormattable;
