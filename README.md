@@ -7,7 +7,7 @@ JSON and HTML, and the shortcuts can be saved as `.lnk` files.
 
 | | |
 |---|---|
-| **Version** | 2026.10.4 |
+| **Version** | 2026.10.5 |
 | **Download** | [.NET 10](https://download.ericzimmermanstools.com/net/JLECmd.zip) (recommended) &middot; [.NET Framework 4.7.2](https://download.ericzimmermanstools.com/JLECmd.zip) |
 | **All tools** | [ericzimmerman.github.io](https://ericzimmerman.github.io) or [Get-ZimmermanTools](https://download.ericzimmermanstools.com/Get-ZimmermanTools.zip), which downloads them all and keeps them current |
 | **Changes** | [ChangeLog](https://ericzimmerman.github.io/changelog/) |
