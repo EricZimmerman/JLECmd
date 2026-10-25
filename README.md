@@ -47,7 +47,7 @@ Options:
   --cp <cp>          Code page to parse strings [default: 1252]
   --debug            Show debug information during processing
   --trace            Show trace information during processing
-  --co               When true, save all console messages to <timestamp>_JLECmd_<version>_ConsoleLog.txt in the output directory (the first of --csv, --json, --html given). Use --co false to turn it off
+  --co               When true, save all console messages to <timestamp>_JLECmd_<version>_ConsoleLog.txt in the output directory (the first of --csv, --json, --html, --dumpTo given). Use --co false to turn it off
   -?, -h, --help     Show help and usage information
   --version          Show version information
 ```
@@ -96,6 +96,7 @@ show "Unknown AppId"; `--appIds` adds descriptions to the built-in list.
 - Real folder names in `TargetIDAbsolutePath`, and all the shortcut parsing fixes listed under LECmd.
 - With `--fd`, jump lists with a named property (AutoList) are no longer dropped.
 - 2026.10.3: 0x2E root folder items with extension blocks after the GUID (a known folder such as Downloads) are read, and zip contents with data in bytes 4-9 (JumpList 2026.10.9, Lnk 2026.10.10, ExtensionBlocks 2026.10.8).
+- 2026.10.5: `--dumpTo` on its own also saves the console log, next to the dumped lnk files.
 - 2026.10.4: `--co` (on by default; `--co false` turns it off) saves all console messages to `<yyyyMMddHHmmss>_JLECmd_<version>_ConsoleLog.txt` in the output directory (the first of `--csv`, `--json`, `--html` given). `--debug` and `--trace` show the time of each message again (they showed the `--dt` date).
 - Exit code 1 when the tool fails (it was always 0). Error reports include source file and line numbers.
 

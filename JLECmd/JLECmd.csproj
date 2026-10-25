@@ -9,7 +9,7 @@
     <Product>JLECmd</Product>
     <Description>Jump List Explorer Command line edition</Description>
     <Copyright>Eric R. Zimmerman 2027</Copyright>
-    <Version>2026.10.4</Version>
+    <Version>2026.10.5</Version>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>PcDesktopProgress128.ico</ApplicationIcon>

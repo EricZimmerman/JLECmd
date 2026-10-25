@@ -231,7 +231,7 @@ namespace JLECmd
             };
             var coOpt = new Option<bool>("--co")
             {
-                Description = "When true, save all console messages to <timestamp>_JLECmd_<version>_ConsoleLog.txt in the output directory (the first of --csv, --json, --html given). Use --co false to turn it off",
+                Description = "When true, save all console messages to <timestamp>_JLECmd_<version>_ConsoleLog.txt in the output directory (the first of --csv, --json, --html, --dumpTo given). Use --co false to turn it off",
                 DefaultValueFactory = _ => true
             };
 
@@ -319,7 +319,7 @@ namespace JLECmd
                 .WriteTo.Console(outputTemplate: template, formatProvider: formatter)
                 .MinimumLevel.ControlledBy(levelSwitch);
 
-            var consoleLog = co ? ConsoleLog.GetPath(ts, csv, json, html) : null;
+            var consoleLog = co ? ConsoleLog.GetPath(ts, csv, json, html, dumpTo) : null;
             if (consoleLog != null)
             {
                 conf.WriteTo.File(consoleLog, outputTemplate: ConsoleLog.Template, formatProvider: formatter);
