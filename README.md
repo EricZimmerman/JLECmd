@@ -7,7 +7,7 @@ JSON and HTML, and the shortcuts can be saved as `.lnk` files.
 
 | | |
 |---|---|
-| **Version** | 2026.10.5 |
+| **Version** | 2026.10.6 |
 | **Download** | [.NET 10](https://download.ericzimmermanstools.com/net/JLECmd.zip) (recommended) &middot; [.NET Framework 4.7.2](https://download.ericzimmermanstools.com/JLECmd.zip) |
 | **All tools** | [ericzimmerman.github.io](https://ericzimmerman.github.io) or [Get-ZimmermanTools](https://download.ericzimmermanstools.com/Get-ZimmermanTools.zip), which downloads them all and keeps them current |
 | **Changes** | [ChangeLog](https://ericzimmerman.github.io/changelog/) |
@@ -88,6 +88,7 @@ show "Unknown AppId"; `--appIds` adds descriptions to the built-in list.
 
 ## What's new in 2026.10
 
+- 2026.10.6: FTP folders and files, find data items (OneDrive folders), URI items that end with their scheme and 0x78/0x79 property views that end with their GUIDs are read in target ID lists (JumpList 2026.10.10, Lnk 2026.10.11, ExtensionBlocks 2026.10.9).
 - Uses about a fifth less memory on large sets of jump lists.
 - New `--user` option: adds the user name to the CSV (a `User` column) and JSON output. JSON dates are ISO 8601 UTC.
 - `--appIds` works again; unknown AppIds show "Unknown AppId" and AppId lookups ignore case.
