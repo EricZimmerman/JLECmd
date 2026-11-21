@@ -28,6 +28,7 @@ using Serilog.Core;
 using Serilog.Events;
 using ServiceStack;
 using ServiceStack.Text;
+using CsvHelper;
 using CsvWriter = CsvHelper.CsvWriter;
 #if !NET6_0_OR_GREATER
 using Directory = Alphaleonis.Win32.Filesystem.Directory;
@@ -47,6 +48,15 @@ namespace JLECmd
 {
     internal class Program
     {
+        //CsvHelper 34 options that keep CsvHelper 33's output (True/False, fields with leading or trailing spaces quoted)
+        private static readonly CsvWriterOptions CsvOptions = new()
+        {
+            //33 quoted text that starts or ends with a space (not a tab, as CsvQuoting.WhenNeededOrWhitespace does)
+            ShouldQuote = (field, fieldType, fieldIndex, recordIndex) => field.Length > 0 && (field[0] == ' ' || field[field.Length - 1] == ' '),
+            TrueValue = "True",
+            FalseValue = "False"
+        };
+
         private static readonly string _preciseTimeFormat = "yyyy-MM-dd HH:mm:ss.fffffff";
 
         private static List<string> _failedFiles;
@@ -651,7 +661,7 @@ namespace JLECmd
             try
             {
                 CsvWriter csvCustom = null;
-                StreamWriter swCustom = null;
+                UserColumnCsvWriter<CustomCsvOut> rowsCustom = null;
 
                 if (csv?.Length > 0)
                 {
@@ -678,20 +688,13 @@ namespace JLECmd
 
                     try
                     {
-                        swCustom = new StreamWriter(outFile);
-                        csvCustom = new CsvWriter(swCustom, CultureInfo.InvariantCulture);
+                        csvCustom = CsvWriter.ToFile(outFile, CsvOptions);
 
                         //only add the User column when --user is used, so the default layout does not change
-                        var mapCustom = csvCustom.Context.AutoMap<CustomCsvOut>();
-                        if (user.IsNullOrEmpty())
-                        {
-                            mapCustom.Map(m => m.User).Ignore();
-                        }
+                        rowsCustom = new UserColumnCsvWriter<CustomCsvOut>(user.IsNullOrEmpty() ? null : r => r.User);
 
-                        csvCustom.Context.RegisterClassMap(mapCustom);
-
-                        csvCustom.WriteHeader(typeof(CustomCsvOut));
-                        csvCustom.NextRecord();
+                        rowsCustom.WriteHeader(csvCustom);
+                        csvCustom.EndRecord();
                     }
                     catch (Exception ex)
                     {
@@ -772,7 +775,7 @@ namespace JLECmd
 
                     try
                     {
-                        csvCustom?.WriteRecords(records);
+                        csvCustom?.WriteRecords(records, rowsCustom);
                     }
                     catch (Exception ex)
                     {
@@ -860,8 +863,7 @@ namespace JLECmd
 
 
                 //Close CSV stuff
-                swCustom?.Flush();
-                swCustom?.Close();
+                csvCustom?.Dispose();
 
                 //Close XML
                 xml?.WriteEndElement();
@@ -884,7 +886,7 @@ namespace JLECmd
             try
             {
                 CsvWriter csvAuto = null;
-                StreamWriter swAuto = null;
+                UserColumnCsvWriter<AutoCsvOut> rowsAuto = null;
 
                 if (csv?.Length > 0)
                 {
@@ -909,20 +911,13 @@ namespace JLECmd
 
                     try
                     {
-                        swAuto = new StreamWriter(outFile);
-                        csvAuto = new CsvWriter(swAuto, CultureInfo.InvariantCulture);
+                        csvAuto = CsvWriter.ToFile(outFile, CsvOptions);
 
                         //only add the User column when --user is used, so the default layout does not change
-                        var mapAuto = csvAuto.Context.AutoMap<AutoCsvOut>();
-                        if (user.IsNullOrEmpty())
-                        {
-                            mapAuto.Map(m => m.User).Ignore();
-                        }
+                        rowsAuto = new UserColumnCsvWriter<AutoCsvOut>(user.IsNullOrEmpty() ? null : r => r.User);
 
-                        csvAuto.Context.RegisterClassMap(mapAuto);
-
-                        csvAuto.WriteHeader(typeof(AutoCsvOut));
-                        csvAuto.NextRecord();
+                        rowsAuto.WriteHeader(csvAuto);
+                        csvAuto.EndRecord();
                     }
                     catch (Exception ex)
                     {
@@ -1002,7 +997,7 @@ namespace JLECmd
 
                     try
                     {
-                        csvAuto?.WriteRecords(records);
+                        csvAuto?.WriteRecords(records, rowsAuto);
                     }
                     catch (Exception ex)
                     {
@@ -1103,8 +1098,7 @@ namespace JLECmd
                 }
 
                 //Close CSV stuff
-                swAuto?.Flush();
-                swAuto?.Close();
+                csvAuto?.Dispose();
 
                 //Close XML
                 xml?.WriteEndElement();
@@ -3063,8 +3057,11 @@ namespace JLECmd
         }
     }
 
-    public sealed class AutoCsvOut
+    [CsvRecord]
+    public sealed partial class AutoCsvOut
     {
+        //written first by UserColumnCsvWriter, only with --user
+        [CsvIgnore]
         public string User { get; set; }
         //jump list info
         public string SourceFile { get; set; }
@@ -3122,8 +3119,11 @@ namespace JLECmd
         public string Notes { get; set; }
     }
 
-    public sealed class CustomCsvOut
+    [CsvRecord]
+    public sealed partial class CustomCsvOut
     {
+        //written first by UserColumnCsvWriter, only with --user
+        [CsvIgnore]
         public string User { get; set; }
         //
         public string SourceFile { get; set; }
